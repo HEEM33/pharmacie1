@@ -45,12 +45,12 @@ export default function Produits() {
   data.append("prix_unitaire", formData.prix_unitaire);
   data.append("niveau_en_stock", formData.niveau_en_stock);
   data.append("categorie_id", formData.categorie_id);
-  data.append("image", formData.image); // fichier !
+  data.append("image", formData.image); 
 
   try {
     const res = await fetch("/api/produit", {
       method: "POST",
-      body: data, // FormData ici
+      body: data, 
     });
 
     if (!res.ok) {
@@ -168,7 +168,7 @@ const handleChange = (e) => {
                   </select>
                 </div>
                 <div className="form-group mb-6">
-                  <input type='file' id="image" name='image' accept="image/*" onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"    />
+                  <input type='file' id="image" name='image' onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"    />
                 </div>
 
                 <div className="flex gap-4 mt-4">

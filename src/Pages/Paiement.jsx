@@ -1,21 +1,15 @@
 import React from "react";
+import { MdDeleteSweep } from "react-icons/md";
 
-// Action Types
 const ActionTypes = {
   CART_ADD: "CART_ADD",
   CART_MINUS: "CART_MINUS",
   CART_REMOVE: "CART_REMOVE"
 };
 
-// Format price
 
 export default function Paiement() {
 
- 
-  
- 
-
- 
   return (
     <>
     <div className="bg-white shadow-md p-4 rounded-lg mb-4" >
@@ -34,16 +28,15 @@ export default function Paiement() {
         </div>
       </div>
       <div className="text-sm text-gray-600 mt-1">
-        <p>Code: </p>
+        <p>Nom: </p>
        
-        <p>Color: </p>
-        <p>Size: </p>
+        <p>Prix: </p>
       </div>
       <div className="flex justify-between items-center mt-2">
         <div className="flex gap-2">
-          <button className="text-red-600 text-sm hover:underline">
-            <i className="fa fa-trash mr-1"></i> Remove
-          </button>
+          <a className="text-red-600 text-sm hover:underline">
+             <MdDeleteSweep />
+          </a>
           <button  className="text-blue-600 text-sm hover:underline">
             <i className="fa fa-heart mr-1"></i> Move to Wishlist
           </button>
@@ -70,8 +63,7 @@ export default function Paiement() {
     <span></span>
   </div>
   <button className="w-full mt-4 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-    Go to Checkout
-  </button>
+    Payer  </button>
 </div>
 </>
   );
