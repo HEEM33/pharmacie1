@@ -1,56 +1,76 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MdDeleteSweep, MdEdit } from "react-icons/md";
 
 export default function Produits() {
 
     const [showForm, setShowForm] = useState(false);
-    const [formData, setFormData] = useState({image: null, nom: "", description: "", prix_unitaire: "", niveau_en_stock: "", categorie_id: "" });
+    const [formData, setFormData] = useState({image: "", nom: "", description: "", prix_unitaire: "", niveau_en_stock: "", categorie_id: "" });
     const [produits, setProduits] = useState([]);
     const [categories, setCategories] = useState([]);
+    const token = localStorage.getItem("token");
+    const [editForm, setEditForm] = useState(false);
+    const [editingId, setEditingId] = useState(null);
 
-    const fetchProduits = async () => {
+    const fetchProduits =  useCallback( async () => {
     try {
-      const res = await fetch("/api/produit");
+      const res = await fetch("http://localhost:8000/api/produit", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await res.json();
       setProduits(data);
     } catch (error) {
       console.error("Erreur lors de la récupération des produits :", error);
     }
-  };
+  }, [token]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
-      const res = await fetch("/api/categorie");
+      const res = await fetch("http://localhost:8000/api/categorie", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await res.json();
       setCategories(data);
     } catch (error) {
       console.error("Erreur lors de la récupération des catégories :", error);
     }
-  };
+  },[token]);
 
-  useEffect(() => {
+ useEffect(() => {
+    if (token) {
       fetchProduits();
-    }, []);
+    }
+  }, [token, fetchProduits]); 
     
    useEffect(() => {
+  if (token) {
     fetchCategories();
-  }, []);
+  }
+  }, [token, fetchCategories]);
 
    const submit = async (e) => {
   e.preventDefault();
 
-  const data = new FormData();
-  data.append("nom", formData.nom);
-  data.append("description", formData.description);
-  data.append("prix_unitaire", formData.prix_unitaire);
-  data.append("niveau_en_stock", formData.niveau_en_stock);
-  data.append("categorie_id", formData.categorie_id);
-  data.append("image", formData.image); // fichier !
-
   try {
-    const res = await fetch("/api/produit", {
-      method: "POST",
-      body: data, // FormData ici
+    const data = new FormData();
+    data.append("nom", formData.nom);
+    data.append("description", formData.description);
+    data.append("prix_unitaire", formData.prix_unitaire);
+    data.append("niveau_en_stock", formData.niveau_en_stock);
+    data.append("categorie_id", formData.categorie_id);
+    if (formData.image) {
+      data.append("image", formData.image);
+    }
+
+    const res = await fetch("http://localhost:8000/api/produit", {
+      method: 'POST',
+       headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      body: data
     });
 
     if (!res.ok) {
@@ -60,7 +80,7 @@ export default function Produits() {
     }
 
     setFormData({
-      image: null,
+      image: "",
       nom: "",
       description: "",
       prix_unitaire: "",
@@ -73,6 +93,7 @@ export default function Produits() {
     console.error("Erreur réseau :", error);
   }
 };
+
  
 
 const handleChange = (e) => {
@@ -82,12 +103,70 @@ const handleChange = (e) => {
     [name]: type === "file" ? files[0] : value,
   }));
 };
+
+ const supprimer = async (id) => {
+  try {
+    await fetch(`http://localhost:8000/api/produit/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    fetchProduits(); 
+  } catch (err) {
+    console.error("Erreur lors de la suppression :", err);
+  }
+};
+
+const startEdit = (produit) => {
+    setFormData({image: produit.image, nom: produit.nom, description: produit.description, prix_unitaire: produit.prix_unitaire, niveau_en_stock: produit.niveau_en_stock, categorie_id: produit.categorie_id, });
+    setEditingId(produit.id);
+    setEditForm(true);
+  };
+
+const edit = async (e) => {
+  e.preventDefault();
+  if (!editingId) return;
+
+  try {
+    const data = new FormData();
+    data.append("nom", formData.nom);
+    data.append("description", formData.description);
+    data.append("prix_unitaire", formData.prix_unitaire);
+    data.append("niveau_en_stock", formData.niveau_en_stock);
+    data.append("categorie_id", formData.categorie_id);
+    if (formData.image instanceof File) {
+      data.append("image", formData.image);
+    }
+
+    const res = await fetch(`http://localhost:8000/api/produit/${editingId}`, {
+      method: "PUT", 
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: data,
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      console.error("Erreurs de validation :", errorData.errors);
+      return;
+    }
+
+    setFormData({image: "", nom: "", description: "", prix_unitaire: "", niveau_en_stock: "", categorie_id: "",});
+    setEditingId(null);
+    setEditForm(false);
+    fetchProduits();
+  } catch (error) {
+    console.error("Erreur lors de la modification :", error);
+  }
+};
+
   return (
    <> 
    
-<button
-        onClick={() => setShowForm(!showForm)}
-        className="mb-4 px-6 py-2.5  bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg transition duration-150 ">
+  <button onClick={() => setShowForm(!showForm)} className="mb-4 px-6 py-2.5  bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg transition duration-150 ">
         Créer
     </button>
 <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
@@ -121,17 +200,28 @@ const handleChange = (e) => {
                 {produits.map((produit, index) => (
                     <tr key={index} className="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
                       <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        {produit.image}
+                        {produit.image && (
+                          <img src={`http://localhost:8000/uploads/products/${produit.image}`} className="h-10 w-10 object-cover rounded" />
+                        )}
                     </th>
                     <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                        {produit.name}
+                        {produit.nom}
                     </th>
                     <td className="px-6 py-4">
                         {produit.description}
                     </td>
+                    <td className="px-6 py-4">
+                        {produit.prix_unitaire}
+                    </td>
+                    <td className="px-6 py-4">
+                        {produit.niveau_en_stock}
+                    </td>
+                    <td className="px-6 py-4">
+                        {produit.categorie ? produit.categorie.nom : "—"}
+                    </td>
                     <td className="flex gap-2 px-6 py-4">
-                        <a href="#" className="font-medium text-blue-600 dark:text-blue-500 "><MdEdit /></a>
-                        <a href="#" className="font-medium text-red-600 dark:text-blue-500 "><MdDeleteSweep /></a>
+                        <a onClick={() => startEdit(produit)} className="font-medium text-blue-600 dark:text-blue-500 cursor-pointer "><MdEdit /></a>
+                        <a onClick={() => supprimer(produit.id)} className="font-medium text-red-600 dark:text-red-500 cursor-pointer "><MdDeleteSweep /></a>
                     </td>
                     </tr>
                 ))}
@@ -141,7 +231,7 @@ const handleChange = (e) => {
      {showForm && (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-        <form onSubmit={submit} className='flex flex-col gap-2' enctype="multipart/form-data">
+        <form onSubmit={submit} className='flex flex-col gap-2' encType="multipart/form-data">
           
                 <div className="form-group mb-6">
                   <input type='text' name='nom' value={formData.nom} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder=" Nom"   />
@@ -159,7 +249,7 @@ const handleChange = (e) => {
                  <div className="form-group mb-6">
                    <select id="categorie_id" name="categorie_id" value={formData.categorie_id}  onChange={handleChange} 
                     className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700">
-                    <option >-- Sélectionner une catégorie --</option>
+                    <option value="" >-- Sélectionner une catégorie --</option>
                     {categories.map((categorie) => (
                       <option key={categorie.id} value={categorie.id}>
                         {categorie.nom}
@@ -168,7 +258,7 @@ const handleChange = (e) => {
                   </select>
                 </div>
                 <div className="form-group mb-6">
-                  <input type='file' id="image" name='image' accept="image/*" onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"    />
+                  <input type='file' name='image' onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"/>
                 </div>
 
                 <div className="flex gap-4 mt-4">
@@ -181,6 +271,54 @@ const handleChange = (e) => {
                   </button>
                 </div>
           
+        </form> 
+      </div>
+    </div>
+     )}
+
+
+     {editForm && (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+        <form onSubmit={edit} className='flex flex-col gap-2' encType="multipart/form-data">
+          
+                <div className="form-group mb-6">
+                  <input type='text' name='nom' value={formData.nom} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder=" Nom"   />
+                </div>
+
+                 <div className="form-group mb-6">
+                  <input type='text' name='description' value={formData.description} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder="Description"   />
+                </div>
+                 <div className="form-group mb-6">
+                  <input type='text' name='prix_unitaire' value={formData.prix_unitaire} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder="Prix unitaire"   />
+                </div>
+                 <div className="form-group mb-6">
+                  <input type='text' name='niveau_en_stock' value={formData.niveau_en_stock} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder=" Niveau en stock"   />
+                </div>
+                 <div className="form-group mb-6">
+                   <select id="categorie_id" name="categorie_id" value={formData.categorie_id}  onChange={handleChange} 
+                    className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700">
+                    <option value="" >-- Sélectionner une catégorie --</option>
+                    {categories.map((categorie) => (
+                      <option key={categorie.id} value={categorie.id}>
+                        {categorie.nom}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group mb-6">
+                  <input type='file' name='image' onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"/>
+                </div>
+
+                <div className="flex gap-4 mt-4">
+                  <button type="submit" className="flex-1 px-6 py-2.5 bg-blue-600 text-white font-medium text-sm uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg gap-10">
+                  Modifier
+                  </button>
+
+                  <button onClick={() => setEditForm(false)} className="flex-1 px-6 py-2.5 bg-red-400 text-white font-medium text-sm uppercase rounded shadow-md hover:bg-red-500 hover:shadow-lg ">
+                      Annuler
+                  </button>
+                </div>
         </form> 
       </div>
     </div>
