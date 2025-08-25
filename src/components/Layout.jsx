@@ -4,21 +4,24 @@ import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { MdGroupAdd, MdMenuOpen, MdNotificationsNone } from "react-icons/md"
 import { IoHomeOutline } from "react-icons/io5"
 import { FaCashRegister, FaHandHoldingMedical, FaProductHunt, FaUserCircle } from "react-icons/fa"
-import { TbCategoryPlus, TbReportSearch } from "react-icons/tb"
+import { TbBrandStocktwits, TbCategoryPlus, TbReportSearch } from "react-icons/tb"
 import { IoLogoBuffer } from "react-icons/io"
 import { CiSearch, CiSettings } from "react-icons/ci"
 import { MdOutlineDashboard } from "react-icons/md"
 import { AuthContext } from './AuthContext'
 
 const menuItems = [
-  { icon: <IoHomeOutline size={24} />, label: 'Home', path: '/' },
-  { icon: <MdOutlineDashboard size={24} />, label: 'Dashboard' },
-  { icon: <MdGroupAdd  size={24} />, label: 'Utilisateur', path: 'utilisateurs' },
-  { icon: <MdNotificationsNone size={24} />, label: 'Log' },
-  { icon: <FaCashRegister size={24} />, label: 'Paiement', path: 'paiement' },
-  { icon: <FaHandHoldingMedical size={24} />, label: 'Pharmacie', path: 'pharmacie' },
-  { icon: <FaProductHunt size={24} />, label: 'Produits', path: 'produits'  },
-  { icon: <TbCategoryPlus size={24} />, label: 'Categories', path: 'categories'  },
+  { icon: <IoHomeOutline size={20} />, label: 'Home', path: '/' },
+  { icon: <MdOutlineDashboard size={20} />, label: 'Dashboard' },
+  { icon: <MdGroupAdd  size={20} />, label: 'Utilisateur', path: 'utilisateurs' },
+  { icon: <MdNotificationsNone size={20} />, label: 'Log' },
+  { icon: <FaCashRegister size={20} />, label: 'Paiement', path: 'paiement' },
+  { icon: <FaHandHoldingMedical size={20} />, label: 'Pharmacie', path: 'pharmacie' },
+  { icon: <FaProductHunt size={20} />, label: 'Produits', path: 'produits'  },
+  { icon: <TbCategoryPlus size={20} />, label: 'Categories', path: 'categories'  },
+  { icon: <TbBrandStocktwits size={20} />, label: 'Stocks', path: 'stock'  },
+  { icon: <TbBrandStocktwits size={20} />, label: 'Commande', path: 'commande'  },
+  { icon: <TbBrandStocktwits size={20} />, label: 'Fournisseur', path: 'fournisseur'  },
 ]
 
 export default function Layout() {
@@ -76,7 +79,7 @@ export default function Layout() {
 
         <ul className="flex-1">
           {menuItems.map((item, index) => (
-            <li key={index}  className='hover:bg-blue-800 rounded-md duration-300 cursor-pointer flex gap-2 items-center relative group'>
+            <li key={index}  className='hover:bg-blue rounded-md duration-300 cursor-pointer flex gap-2 items-center relative group'>
               <Link
                 to={item.path || '#'}
                 className={`flex items-center gap-2 px-3 py-2 my-2 rounded-md duration-200 hover:bg-blue-800 group relative ${
@@ -128,8 +131,8 @@ export default function Layout() {
 
           <div className="relative">
           <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex text-sm bg-gray-800 rounded-full md:me-0 focus:ring-4 focus:ring-gray-300 dark:focus:ring-gray-600" type="button">
-             <span className="text-gray-600 text-sm hidden sm:block">Bienvenue, </span>
-            <FaUserCircle size={28} className="text-blue-600" />
+             <span className="text-gray-600 text-sm hidden sm:block">Bienvenue</span>
+            <FaUserCircle size={25} className="text-blue-600" />
           </button>
           {dropdownOpen && (
             <div className="absolute right-0 mt-4 z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-44 dark:bg-gray-700 dark:divide-gray-600">

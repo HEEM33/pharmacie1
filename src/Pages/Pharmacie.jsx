@@ -91,21 +91,21 @@ export default function Pharmacie(){
 const enregistrer = async () => {
   try {
     const donne = {
-      items: cart.map(item => ({
-        produit_id: item.id,
-        qty: item.qty,
-        prix_unitaire: item.prix_unitaire,
-        total: item.prix_unitaire * item.qty
-      })),
-      total_general: cart.reduce((acc, item) => acc + item.prix_unitaire * item.qty, 0)
-    };
+  produits: cart.map(item => ({
+    id: item.id,
+    quantite: item.qty,
+    total: item.prix_unitaire * item.qty
+  })),
+  total_general: cart.reduce((acc, item) => acc + item.prix_unitaire * item.qty, 0)
+};
 
-    const res = await fetch('http://localhost:8000/api/vente', {
+    const res = await fetch("http://localhost:8000/api/vente", {
       method: 'POST',
-       headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
+       headers: { 
+         accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+       },
       body: JSON.stringify(donne)
     });
 

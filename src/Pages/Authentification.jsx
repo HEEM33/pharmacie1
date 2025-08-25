@@ -29,7 +29,7 @@ const submit = async (e) => {
 
     const data = await res.json();
 
-    login(data.access_token);
+    login(data.access_token, data.user);
 
     setTimeout(() => {
       navigate("/");

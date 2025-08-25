@@ -9,6 +9,9 @@ import Paiement from './Pages/Paiement'
 import Login from './Pages/Authentification'
 import Users from './Pages/Utilisateur'
 import PrivateRoute from './components/Route'
+import Stock from './Pages/Stock'
+import Fournisseur from './Pages/Fournisseur'
+import Commande from './Pages/Commande'
 
 export default function App() {
   return (
@@ -24,6 +27,9 @@ export default function App() {
             <Route path="categories" element={<Categories />} />
             <Route path="paiement" element={<Paiement />} />
             <Route path="utilisateurs" element={<Users />} />
+            <Route path="stock" element={<Stock />} />
+            <Route path="fournisseur" element={<Fournisseur />} />
+            <Route path="commande" element={<Commande />} />
           </Route>
         </Route>
       </Routes>
