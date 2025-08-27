@@ -1,27 +1,28 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
-import { MdGroupAdd, MdMenuOpen, MdNotificationsNone } from "react-icons/md"
+import { MdGroupAdd, MdMenuOpen, MdNotificationsNone, MdReceiptLong } from "react-icons/md"
 import { IoHomeOutline } from "react-icons/io5"
-import { FaCashRegister, FaHandHoldingMedical, FaProductHunt, FaUserCircle } from "react-icons/fa"
+import { FaBoxes, FaCashRegister, FaHandHoldingMedical, FaProductHunt, FaTruck, FaUserCircle } from "react-icons/fa"
 import { TbBrandStocktwits, TbCategoryPlus, TbReportSearch } from "react-icons/tb"
 import { IoLogoBuffer } from "react-icons/io"
 import { CiSearch, CiSettings } from "react-icons/ci"
 import { MdOutlineDashboard } from "react-icons/md"
 import { AuthContext } from './AuthContext'
+import { BsUpcScan } from 'react-icons/bs'
+import { AiOutlineUnorderedList } from 'react-icons/ai'
 
 const menuItems = [
-  { icon: <IoHomeOutline size={20} />, label: 'Home', path: '/' },
-  { icon: <MdOutlineDashboard size={20} />, label: 'Dashboard' },
+  { icon: <MdOutlineDashboard size={20} />, label: 'Dashboard', path: 'dashboard' },
   { icon: <MdGroupAdd  size={20} />, label: 'Utilisateur', path: 'utilisateurs' },
-  { icon: <MdNotificationsNone size={20} />, label: 'Log' },
+  { icon: <BsUpcScan size={20} />, label: 'Log' },
   { icon: <FaCashRegister size={20} />, label: 'Paiement', path: 'paiement' },
   { icon: <FaHandHoldingMedical size={20} />, label: 'Pharmacie', path: 'pharmacie' },
   { icon: <FaProductHunt size={20} />, label: 'Produits', path: 'produits'  },
   { icon: <TbCategoryPlus size={20} />, label: 'Categories', path: 'categories'  },
-  { icon: <TbBrandStocktwits size={20} />, label: 'Stocks', path: 'stock'  },
-  { icon: <TbBrandStocktwits size={20} />, label: 'Commande', path: 'commande'  },
-  { icon: <TbBrandStocktwits size={20} />, label: 'Fournisseur', path: 'fournisseur'  },
+  { icon: <FaBoxes size={20} />, label: 'Stocks', path: 'stock'  },
+  { icon: <MdReceiptLong size={20} />, label: 'Commande', path: 'commande'  },
+  { icon: <FaTruck size={20} />, label: 'Fournisseur', path: 'fournisseur'  },
 ]
 
 export default function Layout() {
@@ -69,12 +70,8 @@ export default function Layout() {
   return (
     <div className="flex h-screen overflow-hidden">
       <nav className={`bg-green-600 text-white p-4 flex flex-col duration-300 ${open ? 'w-60' : 'w-16'}`}>
-        <div className="flex items-center justify-between mb-6">
-          <MdMenuOpen
-            size={28}
-            className={`cursor-pointer transition-transform ${!open && 'rotate-180'}`}
-            onClick={() => setOpen(!open)}
-          />
+        <div className="flex h-screen items-center justify-between mb-6">
+          <MdMenuOpen size={28} className={`cursor-pointer transition-transform ${!open && 'rotate-180'}`} onClick={() => setOpen(!open)}/>
         </div>
 
         <ul className="flex-1">
@@ -82,7 +79,7 @@ export default function Layout() {
             <li key={index}  className='hover:bg-blue rounded-md duration-300 cursor-pointer flex gap-2 items-center relative group'>
               <Link
                 to={item.path || '#'}
-                className={`flex items-center gap-2 px-3 py-2 my-2 rounded-md duration-200 hover:bg-blue-800 group relative ${
+                className={`flex items-center gap-1 px-3 py-2 my-2 rounded-md duration-200 hover:bg-blue-800 group relative ${
                   location.pathname === item.path ? 'bg-blue-800' : ''}`}>
                 {item.icon}
                 <span className={`transition-all ${!open && 'hidden'}`}>{item.label}</span>
@@ -103,7 +100,6 @@ export default function Layout() {
           </form>
 
             <div className="flex items-center gap-4">
-            {/* Notifications */}
             <div className="relative">
               <button onClick={() => setNotifOpen(!notifOpen)} className="relative">
                 <MdNotificationsNone size={26} className="text-gray-700" />
@@ -158,8 +154,8 @@ export default function Layout() {
         </div>
         </header>
 
-        <main className="flex-1 bg-gray-100 ">
-          <Outlet />
+        <main className="flex-1 bg-gray-100 overflow-y-auto">
+          <Outlet context={{ q }} />
         </main>
       </div>
     </div>

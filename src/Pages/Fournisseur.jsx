@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { MdDeleteSweep, MdEdit } from "react-icons/md";
+import { useOutletContext } from "react-router-dom";
 
 export default function Fournisseur() {
   const [formData, setFormData] = useState({ nom: "", adresse: "", telephone: "" });
@@ -8,7 +9,11 @@ export default function Fournisseur() {
   const [fournisseurs, setFournisseurs] = useState([]);
   const [editingId, setEditingId] = useState(null); 
   const token = localStorage.getItem("token");
+  const { q } = useOutletContext();
 
+  const filtered = fournisseurs.filter(p =>
+    p.nom.toLowerCase().includes(q.toLowerCase())
+  );
   const fetchFournisseurs = useCallback(async () => {
     try {
       const res = await fetch("/api/fournisseur", {
@@ -99,7 +104,7 @@ export default function Fournisseur() {
             </tr>
           </thead>
           <tbody>
-            {fournisseurs.map((fournisseur, index) => (
+            {filtered.map((fournisseur, index) => (
               <tr key={index} className="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
                 <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">{fournisseur.nom}</td>
                 <td className="px-6 py-4">{fournisseur.adresse}</td>

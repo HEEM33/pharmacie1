@@ -12,6 +12,7 @@ import PrivateRoute from './components/Route'
 import Stock from './Pages/Stock'
 import Fournisseur from './Pages/Fournisseur'
 import Commande from './Pages/Commande'
+import Dashboard from './Pages/Dashboard'
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="pharmacie" element={<Pharmacie />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="produits" element={<Produits />} />
             <Route path="categories" element={<Categories />} />
             <Route path="paiement" element={<Paiement />} />

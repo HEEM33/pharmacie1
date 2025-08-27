@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import './pharmacie.css'
 import { MdDeleteSweep } from "react-icons/md";
 import { FaCartPlus } from "react-icons/fa";
+import { useOutletContext } from "react-router-dom";
 
 export default function Pharmacie(){
   const [categories, setCategories] = useState([]);
@@ -10,7 +11,12 @@ export default function Pharmacie(){
   const [isLoading, setIsLoading] = useState(true);
   const [cart, setCart] = useState([]);
   const token = localStorage.getItem("token");
-  
+  const { q } = useOutletContext();
+
+  const filtered = produits.filter(p =>
+     (!q || p.nom.toLowerCase().includes(q.toLowerCase())) &&
+  (!selectedCategory || p.categorie_id === selectedCategory.id)
+  );
 
   useEffect(() => {
     const fetchProduits = async () => {
@@ -48,11 +54,11 @@ export default function Pharmacie(){
       console.error("Erreur lors de la récupération des catégories :", error);
     }
   };
-    fetchCategories(fetchCategories);
+    fetchCategories();
   }, [token]);
 
-  const selectCategory = (category) => {
-    setSelectedCategory(category);
+  const selectCategory = (categorie) => {
+    setSelectedCategory(categorie);
   };
 
   const addToCart = (produit) => {
@@ -94,7 +100,6 @@ const enregistrer = async () => {
   produits: cart.map(item => ({
     id: item.id,
     quantite: item.qty,
-    total: item.prix_unitaire * item.qty
   })),
   total_general: cart.reduce((acc, item) => acc + item.prix_unitaire * item.qty, 0)
 };
@@ -148,8 +153,7 @@ const enregistrer = async () => {
     
 
       <div className="flex flex-wrap justify-start">
-  {produits
-    .filter(p => !selectedCategory || p.category_id === selectedCategory.id)
+  {filtered
     .map((produit) => (
       <div key={produit.id} className="w-[150px] h-[185px] rounded-lg overflow-hidden shadow-md bg-white m-3 transition-transform duration-200 hover:scale-105">
         <img src={`http://localhost:8000/uploads/products/${produit.image}`} alt="Card" className="w-full h-[110px] object-cover" />
@@ -210,7 +214,7 @@ const enregistrer = async () => {
       <div className="mt-6 border-t pt-4 flex justify-between font-bold text-lg">
         <span>Total :</span>
         <span>
-          {cart.reduce((acc, item) => acc + item.prix_unitaire * item.qty, 0)}
+          {format(cart.reduce((acc, item) => acc + item.prix_unitaire * item.qty, 0))}
         </span>
       </div>
 
@@ -220,7 +224,6 @@ const enregistrer = async () => {
     </>
   )}
 </div>
-
       </div>
         </>
     )

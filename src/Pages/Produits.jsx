@@ -1,15 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
 import { MdDeleteSweep, MdEdit } from "react-icons/md";
+import { useOutletContext } from "react-router-dom";
 
 export default function Produits() {
 
     const [showForm, setShowForm] = useState(false);
-    const [formData, setFormData] = useState({image: "", nom: "", description: "", prix_unitaire: "", niveau_en_stock: "", categorie_id: "" });
+    const [formData, setFormData] = useState({image: "", nom: "", description: "", prix_unitaire: "", categorie_id: "" });
     const [produits, setProduits] = useState([]);
     const [categories, setCategories] = useState([]);
     const token = localStorage.getItem("token");
     const [editForm, setEditForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const { q } = useOutletContext();
+
+  const filtered = produits.filter(p =>
+    p.nom.toLowerCase().includes(q.toLowerCase())
+  );
 
     const fetchProduits =  useCallback( async () => {
     try {
@@ -59,7 +65,6 @@ export default function Produits() {
     data.append("nom", formData.nom);
     data.append("description", formData.description);
     data.append("prix_unitaire", formData.prix_unitaire);
-    data.append("niveau_en_stock", formData.niveau_en_stock);
     data.append("categorie_id", formData.categorie_id);
     if (formData.image) {
       data.append("image", formData.image);
@@ -84,7 +89,6 @@ export default function Produits() {
       nom: "",
       description: "",
       prix_unitaire: "",
-      niveau_en_stock: "",
       categorie_id: "",
     });
     setShowForm(false);
@@ -120,7 +124,7 @@ const handleChange = (e) => {
 };
 
 const startEdit = (produit) => {
-    setFormData({image: produit.image, nom: produit.nom, description: produit.description, prix_unitaire: produit.prix_unitaire, niveau_en_stock: produit.niveau_en_stock, categorie_id: produit.categorie_id, });
+    setFormData({image: produit.image, nom: produit.nom, description: produit.description, prix_unitaire: produit.prix_unitaire, categorie_id: produit.categorie_id, });
     setEditingId(produit.id);
     setEditForm(true);
   };
@@ -134,7 +138,6 @@ const edit = async (e) => {
     data.append("nom", formData.nom);
     data.append("description", formData.description);
     data.append("prix_unitaire", formData.prix_unitaire);
-    data.append("niveau_en_stock", formData.niveau_en_stock);
     data.append("categorie_id", formData.categorie_id);
     if (formData.image instanceof File) {
       data.append("image", formData.image);
@@ -154,7 +157,7 @@ const edit = async (e) => {
       return;
     }
 
-    setFormData({image: "", nom: "", description: "", prix_unitaire: "", niveau_en_stock: "", categorie_id: "",});
+    setFormData({image: "", nom: "", description: "", prix_unitaire: "", categorie_id: "",});
     setEditingId(null);
     setEditForm(false);
     fetchProduits();
@@ -163,6 +166,7 @@ const edit = async (e) => {
   }
 };
 
+
   return (
    <> 
    
@@ -170,7 +174,7 @@ const edit = async (e) => {
         Créer
     </button>
 <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-    <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+    <table  className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
         <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
             <tr>
                 <th scope="col" className="px-6 py-3">
@@ -197,7 +201,7 @@ const edit = async (e) => {
             </tr>
         </thead>
         <tbody>
-                {produits.map((produit, index) => (
+                {filtered.map((produit, index) => (
                     <tr key={index} className="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
                       <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                         {produit.image && (
@@ -243,9 +247,7 @@ const edit = async (e) => {
                  <div className="form-group mb-6">
                   <input type='text' name='prix_unitaire' value={formData.prix_unitaire} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder="Prix unitaire"   />
                 </div>
-                 <div className="form-group mb-6">
-                  <input type='text' name='niveau_en_stock' value={formData.niveau_en_stock} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder=" Niveau en stock"   />
-                </div>
+                 
                  <div className="form-group mb-6">
                    <select id="categorie_id" name="categorie_id" value={formData.categorie_id}  onChange={handleChange} 
                     className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700">
@@ -292,9 +294,7 @@ const edit = async (e) => {
                  <div className="form-group mb-6">
                   <input type='text' name='prix_unitaire' value={formData.prix_unitaire} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder="Prix unitaire"   />
                 </div>
-                 <div className="form-group mb-6">
-                  <input type='text' name='niveau_en_stock' value={formData.niveau_en_stock} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder=" Niveau en stock"   />
-                </div>
+                 
                  <div className="form-group mb-6">
                    <select id="categorie_id" name="categorie_id" value={formData.categorie_id}  onChange={handleChange} 
                     className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700">

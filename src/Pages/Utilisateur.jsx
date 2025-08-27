@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { MdDeleteSweep, MdEdit } from "react-icons/md";
+import { useOutletContext } from "react-router-dom";
 
 export default function Users() {
 const [formData, setFormData] = useState({ name: "", email: "", password: "", role_id: "" });
@@ -8,6 +9,11 @@ const [formData, setFormData] = useState({ name: "", email: "", password: "", ro
   const token = localStorage.getItem("token");
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState(null);
+  const { q } = useOutletContext();
+
+  const filtered = users.filter(u =>
+    u.name.toLowerCase().includes(q.toLowerCase())
+  );
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -99,7 +105,7 @@ const startEdit = (user) => {
       body: JSON.stringify(formData),
     });
 
-    setFormData({ name: "", email: "", role:"" });
+    setFormData({ name: "", email: "", role_id:"" });
     setEditingId(null);
     setEditForm(false);
     fetchUsers();
@@ -132,7 +138,7 @@ const startEdit = (user) => {
             </tr>
         </thead>
         <tbody>
-        {users.map((user, index) => (
+        {filtered.map((user, index) => (
             <tr key={index} className="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
             <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                 {user.name}

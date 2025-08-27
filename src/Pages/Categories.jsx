@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { MdDeleteSweep, MdEdit } from "react-icons/md";
+import { useOutletContext } from "react-router-dom";
 
 export default function Categories() {
   const [formData, setFormData] = useState({ nom: "", description: "" });
@@ -8,6 +9,11 @@ export default function Categories() {
   const [categories, setCategories] = useState([]);
   const [editingId, setEditingId] = useState(null); 
   const token = localStorage.getItem("token");
+  const { q } = useOutletContext();
+
+  const filtered = categories.filter(c =>
+    c.nom.toLowerCase().includes(q.toLowerCase())
+  );
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -98,7 +104,7 @@ export default function Categories() {
             </tr>
           </thead>
           <tbody>
-            {categories.map((categorie, index) => (
+            {filtered.map((categorie, index) => (
               <tr key={index} className="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
                 <th className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">{categorie.nom}</th>
                 <td className="px-6 py-4">{categorie.description}</td>

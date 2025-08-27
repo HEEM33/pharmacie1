@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { FaCheck } from "react-icons/fa";
+import { useOutletContext } from "react-router-dom";
 
 export default function Stock() {
   const [stocks, setStocks] = useState([]);
@@ -7,6 +9,11 @@ export default function Stock() {
   const [quantite, setQuantite] = useState("");
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
+   const { q } = useOutletContext();
+
+  const filtered = stocks.filter(s =>
+    s.produit.nom.toLowerCase().includes(q.toLowerCase())
+  );
 
   useEffect(() => {
     const fetchStocks = async () => {
@@ -76,7 +83,7 @@ export default function Stock() {
 
   return (
     <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Gestion du Stock</h2>
+      <h2 className="text-2xl font-bold mb-4">Entrée en Stock</h2>
 
       <div className="mb-6 p-4 bg-white shadow rounded">
         <h3 className="font-semibold mb-2">Ajouter une entrée en stock</h3>
@@ -89,7 +96,7 @@ export default function Stock() {
           </select>
           <input type="number" placeholder="Quantité" value={quantite} onChange={(e) => setQuantite(e.target.value)} className="border p-2 rounded w-24"/>
           <button onClick={ajouterStock} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Ajouter
+            <FaCheck />
           </button>
         </div>
       </div>
@@ -104,13 +111,23 @@ export default function Stock() {
               <tr>
                 <th className="border px-2 py-1">Produit</th>
                 <th className="border px-2 py-1">Quantité</th>
+                <th className="border px-2 py-1">Date</th>
               </tr>
             </thead>
             <tbody>
-              {stocks.map(s => (
+              {filtered.map(s => (
                 <tr key={s.id}>
                   <td className="border px-2 py-1">{s.produit.nom}</td>
                   <td className="border px-2 py-1">{s.quantite}</td>
+                  <td> {new Date(s.created_at).toLocaleDateString("fr-FR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })}{" "}
+                  {new Date(s.created_at).toLocaleTimeString("fr-FR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}</td>
                 </tr>
               ))}
             </tbody>
