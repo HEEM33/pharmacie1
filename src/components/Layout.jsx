@@ -11,11 +11,12 @@ import { MdOutlineDashboard } from "react-icons/md"
 import { AuthContext } from './AuthContext'
 import { BsUpcScan } from 'react-icons/bs'
 import { AiOutlineUnorderedList } from 'react-icons/ai'
+import toast, { Toaster } from 'react-hot-toast'
 
 const menuItems = [
   { icon: <MdOutlineDashboard size={20} />, label: 'Dashboard', path: 'dashboard' },
   { icon: <MdGroupAdd  size={20} />, label: 'Utilisateur', path: 'utilisateurs' },
-  { icon: <BsUpcScan size={20} />, label: 'Log' },
+  { icon: <BsUpcScan size={20} />, label: 'qr', path: 'qr' },
   { icon: <FaCashRegister size={20} />, label: 'Paiement', path: 'paiement' },
   { icon: <FaHandHoldingMedical size={20} />, label: 'Pharmacie', path: 'pharmacie' },
   { icon: <FaProductHunt size={20} />, label: 'Produits', path: 'produits'  },
@@ -35,13 +36,26 @@ export default function Layout() {
   const navigate = useNavigate();
   const { token, user, logout } = useContext(AuthContext);
   const [alertes, setAlertes] = useState([]);
-   const [notifOpen, setNotifOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [formData, setFormData] = useState({email: "", ancienpassword: "", password: "", confirmPassword: "" });
+
+  useEffect(() => {
+  if (user?.email) {
+    setFormData((prev) => ({
+      ...prev,
+      email: user.email,   
+    }));
+  }
+}, [user]);
 
   useEffect(() => {
     if (token) {
       fetch("http://localhost:8000/api/alerte", {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       })
       .then(res => res.json())
@@ -66,8 +80,39 @@ export default function Layout() {
       console.error("Erreur logout :", err);
     }
   };
+const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+  const changer = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch("http://localhost:8000/api/newpassword", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrors(data.errors || {});
+        throw new Error(data.message || "Échec de la réinitialisation");
+      }
+      setShowForm(false);
+      toast.success("Votre mot de passe a ete reinitialise ");
+      
+    } catch (err) {
+      console.error(err.message);
+    }
+  };
 
   return (
+    <>
+    <Toaster position="top-right" />
     <div className="flex h-screen overflow-hidden">
       <nav className={`bg-green-600 text-white p-4 flex flex-col duration-300 ${open ? 'w-60' : 'w-16'}`}>
         <div className="flex h-screen items-center justify-between mb-6">
@@ -76,7 +121,7 @@ export default function Layout() {
 
         <ul className="flex-1">
           {menuItems.map((item, index) => (
-            <li key={index}  className='hover:bg-blue rounded-md duration-300 cursor-pointer flex gap-2 items-center relative group'>
+            <li key={index}  className={`hover:bg-blue rounded-md duration-300 cursor-pointer flex gap-2 items-center relative group`}>
               <Link
                 to={item.path || '#'}
                 className={`flex items-center gap-1 px-3 py-2 my-2 rounded-md duration-200 hover:bg-blue-800 group relative ${
@@ -138,9 +183,52 @@ export default function Layout() {
                 </div>
                   <ul className="py-2 text-sm text-gray-700 dark:text-gray-200">
                     <li>
-                      <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                        Paramètres
+                      <a onClick={() => setShowForm(!showForm)} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
+                        Mot de passe
                       </a>
+                      {showForm && (
+                        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+                      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
+                        <button className="absolute top-2 right-2 text-gray-500 hover:text-red-700" onClick={() => setShowForm(false)} >
+                            ✕
+                          </button>
+                      <h3 className="my-4 text-2xl font-semibold text-gray-700">Changer de mot de passe</h3>
+                    <form onSubmit={changer} className="flex flex-col space-y-5">
+
+                      <div className="flex flex-col space-y-1">
+                        <label className="text-sm font-semibold text-gray-500">
+                          Ancien mot de passe
+                        </label>
+                        <input type="password" id="ancienpassword" name="ancienpassword" value={formData.ancienpassword} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-4 focus:ring-blue-200" required/>
+                        
+                        {errors.ancienpassword && <p className="text-red-500">{errors.ancienpassword[0]}</p>}
+                      </div>
+
+                      <div className="flex flex-col space-y-1">
+                        <label className="text-sm font-semibold text-gray-500">
+                          Nouveau mot de passe
+                        </label>
+                        <input type="password" id="password" name="password" value={formData.password} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-4 focus:ring-blue-200" required/>
+                        {errors.password && <p className="text-red-500">{errors.password[0]}</p>}
+                      </div>
+
+                      <div className="flex flex-col space-y-1">
+                        <label htmlFor="password" className="text-sm font-semibold text-gray-500">
+                          Confirmer le mot de passe
+                        </label>
+                        <input type="password" id="password_confirmation" name="password_confirmation" value={formData.password_confirmation} onChange={handleChange} className="px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-4 focus:ring-blue-200" required/> 
+                        {errors.password_confirmation && (<p className="text-red-500">{errors.password_confirmation[0]}</p>)}
+                      </div>
+
+                      <div>
+                        <button type="submit" className="w-full px-4 py-2 text-lg font-semibold text-white bg-blue-500 rounded-md shadow hover:bg-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-200">
+                          Changer 
+                        </button>
+                      </div>
+                    </form>
+                    </div>
+                    </div>
+                  )}
                     </li>
                   </ul>
                   <div className="py-2">
@@ -155,9 +243,10 @@ export default function Layout() {
         </header>
 
         <main className="flex-1 bg-gray-100 overflow-y-auto">
-          <Outlet context={{ q }} />
+          <Outlet context={{ q, setQ }} />
         </main>
       </div>
     </div>
+    </>
   )
 }

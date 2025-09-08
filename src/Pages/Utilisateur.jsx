@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import { MdDeleteSweep, MdEdit } from "react-icons/md";
 import { useOutletContext } from "react-router-dom";
 
 export default function Users() {
-const [formData, setFormData] = useState({ name: "", email: "", password: "", role_id: "" });
+const [formData, setFormData] = useState({ name: "", email: "", role_id: "" });
   const [showForm, setShowForm] = useState(false);
   const [users, setUsers] = useState([]);
   const token = localStorage.getItem("token");
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState(null);
+  const [editForm, setEditForm] = useState(false);
   const { q } = useOutletContext();
+  const [errors, setErrors] = useState({});
 
   const filtered = users.filter(u =>
     u.name.toLowerCase().includes(q.toLowerCase())
@@ -38,20 +40,29 @@ const [formData, setFormData] = useState({ name: "", email: "", password: "", ro
 
   const submit = async (e) => {
     e.preventDefault();
+    setErrors({});
     console.log(formData);
-
-    await fetch("http://127.0.0.1:8000/api/users", {
+    try{
+    const res = await fetch("http://127.0.0.1:8000/api/users", {
       method: 'POST',
       headers: { 'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
        },
       body: JSON.stringify(formData)
     });
-
-    setFormData({ name: "", email: "", password: "", role_id: ""  });
+    if (!res.ok) {
+        const errorData = await res.json();
+        setErrors(errorData.errors || {});
+    throw new Error(errorData.message || "Échec de connexion");
+     
+    }
+    toast.success("Utilisateur ajoute avec succes");
+    setFormData({ name: "", email: "", role_id: ""  });
     setShowForm(false);
     fetchUsers();
-  };
+  }catch (err) {
+    console.error(err);
+   } };
   const [roles, setRoles] = useState([]);
 
 const fetchRoles = useCallback(async () => {
@@ -80,6 +91,7 @@ useEffect(() => {
         Authorization: `Bearer ${token}`,
       },
     });
+    toast.success("Suppression reussi");
     fetchUsers(); 
   } catch (err) {
     console.error("Erreur lors de la suppression :", err);
@@ -96,7 +108,7 @@ const startEdit = (user) => {
     e.preventDefault();
     if (!editingId) return;
 
-    await fetch(`http://localhost:8000/api/users/${editingId}`, {
+   const res = await fetch(`http://localhost:8000/api/users/${editingId}`, {
       method: "PUT",
       headers: { 
         "Content-Type": "application/json",
@@ -104,7 +116,12 @@ const startEdit = (user) => {
       },
       body: JSON.stringify(formData),
     });
-
+    if (!res.ok) {
+       const errorData = await res.json();
+    setErrors(errorData.errors || {});
+    throw new Error(errorData.message || "Échec de connexion");
+    }
+    toast.success("Vous avez modifier l'utilisateur");
     setFormData({ name: "", email: "", role_id:"" });
     setEditingId(null);
     setEditForm(false);
@@ -113,7 +130,7 @@ const startEdit = (user) => {
 
   return (
    <> 
-   
+   <Toaster position="top-right" />
 <button
         onClick={() => setShowForm(!showForm)}
         className="mb-4 px-6 py-2.5  bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg transition duration-150 ">
@@ -164,14 +181,14 @@ const startEdit = (user) => {
         <form  onSubmit={submit} className='flex flex-col gap-2' >
           
                 <div className="form-group mb-6">
-                  <input type='text' name='name' value={formData.name} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder=" Nom"   />
+                  <input type='text' name='name' value={formData.name} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder=" Nom" required />
+                  {errors.name && <p className="text-red-500 text-sm">{errors.name[0]}</p>}
                 </div>
                  <div className="form-group mb-6">
-                  <input type='text' name='email' value={formData.email} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder=" Email" />
+                  <input type='text' name='email' value={formData.email} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder=" Email" required />
+                  {errors.email && <p className="text-red-500 text-sm">{errors.email[0]}</p>}
                 </div>
-                <div className="form-group mb-6">
-                  <input type='text' name='password' value={formData.password} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder=" Mot de passe" />
-                </div>
+              
                 <div className="form-group mb-6">
                    <select id="role_id" name="role_id" value={formData.role_id}  onChange={handleChange} 
                     className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700">
@@ -205,9 +222,11 @@ const startEdit = (user) => {
           
                 <div className="form-group mb-6">
                   <input type='text' name='name' value={formData.name} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"  />
+                  {errors.name && <p className="text-red-500 text-sm">{errors.name[0]}</p>}
                 </div>
                  <div className="form-group mb-6">
                   <input type='text' name='email' value={formData.email} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"  />
+                  {errors.email && <p className="text-red-500 text-sm">{errors.email[0]}</p>}
                 </div>
                 
                 <div className="form-group mb-6">
@@ -220,6 +239,7 @@ const startEdit = (user) => {
                       </option>
                     ))}
                   </select>
+                  {errors.role_id && <p className="text-red-500 text-sm">{errors.role_id[0]}</p>}
                 </div>
 
                 <div className="flex gap-4 mt-4">
@@ -227,7 +247,7 @@ const startEdit = (user) => {
                   Modifier
                   </button>
 
-                  <button onClick={() => setEditForm(false)} className="flex-1 px-6 py-2.5 bg-red-400 text-white font-medium text-sm uppercase rounded shadow-md hover:bg-red-500 hover:shadow-lg ">
+                  <button onClick={() => {  setEditForm(false); setFormData({ name: "", email: "", role_id: "" });}} className="flex-1 px-6 py-2.5 bg-red-400 text-white font-medium text-sm uppercase rounded shadow-md hover:bg-red-500 hover:shadow-lg ">
                       Annuler
                   </button>
                </div>

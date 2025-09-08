@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import { MdDeleteSweep, MdEdit } from "react-icons/md";
 import { useOutletContext } from "react-router-dom";
 
@@ -8,6 +9,7 @@ export default function Categories() {
   const [editForm, setEditForm] = useState(false);
   const [categories, setCategories] = useState([]);
   const [editingId, setEditingId] = useState(null); 
+  const [errors, setErrors] = useState({});
   const token = localStorage.getItem("token");
   const { q } = useOutletContext();
 
@@ -37,7 +39,7 @@ export default function Categories() {
 
   const submit = async (e) => {
     e.preventDefault();
-    await fetch("/api/categorie", {
+    const res = await fetch("/api/categorie", {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
@@ -45,6 +47,12 @@ export default function Categories() {
       },
       body: JSON.stringify(formData),
     });
+     if (!res.ok) {
+       const errorData = await res.json();
+    setErrors(errorData.errors || {});
+    throw new Error(errorData.message || "Échec de connexion");
+    }
+    toast.success("Categorie ajouter avec succes");
     setFormData({ nom: "", description: "" });
     setShowForm(false);
     fetchCategories();
@@ -56,6 +64,7 @@ export default function Categories() {
         method: "DELETE",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
+      toast.success("Categorie supprime avec succes");
       fetchCategories();
     } catch (err) {
       console.error("Erreur lors de la suppression :", err);
@@ -72,7 +81,7 @@ export default function Categories() {
     e.preventDefault();
     if (!editingId) return;
 
-    await fetch(`/api/categorie/${editingId}`, {
+   const res = await fetch(`/api/categorie/${editingId}`, {
       method: "PUT",
       headers: { 
         "Content-Type": "application/json",
@@ -80,15 +89,35 @@ export default function Categories() {
       },
       body: JSON.stringify(formData),
     });
-
+    if (!res.ok) {
+       const errorData = await res.json();
+    setErrors(errorData.errors || {});
+    throw new Error(errorData.message || "Échec de connexion");
+    }
+    toast.success("Categorie mis a jour");
     setFormData({ nom: "", description: "" });
     setEditingId(null);
     setEditForm(false);
     fetchCategories();
   };
 
+  if (!categories) {
+    return (
+      
+<div role="status">
+    <svg aria-hidden="true" className="w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"/>
+        <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"/>
+    </svg>
+    <span className="sr-only">Loading...</span>
+</div>
+
+    );
+  }
+
   return (
     <>
+     <Toaster position="top-right" />
       <button
         onClick={() => setShowForm(!showForm)} className="mb-4 px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg transition duration-150">
         Créer
@@ -122,8 +151,10 @@ export default function Categories() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <form onSubmit={submit} className="flex flex-col gap-2">
-              <input type="text" name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" className="form-control w-full px-3 py-1.5 border rounded" />
-              <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" className="form-control w-full px-3 py-1.5 border rounded"></textarea>
+              <input type="text" name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" className="form-control w-full px-3 py-1.5 border rounded" required />
+              {errors.nom && <p className="text-red-500">{errors.nom[0]}</p>}
+              <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Description" className="form-control w-full px-3 py-1.5 border rounded" required ></textarea>
+              {errors.description && <p className="text-red-500">{errors.description[0]}</p>}
               <div className="flex gap-4 mt-4">
                 <button type="submit" className="flex-1 px-6 py-2.5 bg-blue-600 text-white rounded">Ajouter</button>
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 px-6 py-2.5 bg-red-400 text-white rounded">Annuler</button>
@@ -137,11 +168,11 @@ export default function Categories() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <form onSubmit={edit} className="flex flex-col gap-2">
-              <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="form-control w-full px-3 py-1.5 border rounded" />
-              <textarea name="description" value={formData.description} onChange={handleChange} className="form-control w-full px-3 py-1.5 border rounded"></textarea>
+              <input type="text" name="nom" value={formData.nom} onChange={handleChange} className="form-control w-full px-3 py-1.5 border rounded" required />
+              <textarea name="description" value={formData.description} onChange={handleChange} className="form-control w-full px-3 py-1.5 border rounded" required ></textarea>
               <div className="flex gap-4 mt-4">
                 <button type="submit" className="flex-1 px-6 py-2.5 bg-blue-600 text-white rounded">Modifier</button>
-                <button type="button" onClick={() => setEditForm(false)} className="flex-1 px-6 py-2.5 bg-red-400 text-white rounded">Annuler</button>
+                <button type="button" onClick={() => { setEditForm(false); setFormData({ nom: "", description: "" });}} className="flex-1 px-6 py-2.5 bg-red-400 text-white rounded">Annuler</button>
               </div>
             </form>
           </div>

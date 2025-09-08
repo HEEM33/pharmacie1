@@ -5,6 +5,7 @@ import { AuthContext } from "../components/AuthContext";
 export default function Login(){
     const [formData, setFormData] = useState({ email: "", password: "" });
     const navigate = useNavigate();
+    const [errors, setErrors] = useState({});
     const { login } = useContext(AuthContext);
 
      const handleChange = (e) => {
@@ -23,13 +24,16 @@ const submit = async (e) => {
       body: JSON.stringify(formData),
     });
 
-    if (!res.ok) {
-      throw new Error("Échec de connexion");
-    }
+    
 
     const data = await res.json();
+    if (!res.ok) {
+       const errorData = await res.json();
+    setErrors(errorData.errors || {});
+    throw new Error(errorData.message || "Échec de connexion");
+    }
 
-    login(data.access_token, data.user);
+    login(data.access_token, data.user, data.roles);
 
     setTimeout(() => {
       navigate("/");
@@ -37,7 +41,6 @@ const submit = async (e) => {
     
   } catch (err) {
     console.error(err.message);
-    alert("Email ou mot de passe incorrect");
   }
 };
 
@@ -53,14 +56,16 @@ const submit = async (e) => {
           <form onSubmit={submit} className="flex flex-col space-y-5">
             <div className="flex flex-col space-y-1">
               <label htmlFor="email" className="text-sm font-semibold text-gray-500">Adresse email</label>
-              <input type="email" id="email" name="email" value={formData.email}  onChange={handleChange} autoFocus className="px-4 py-2 transition duration-300 border border-gray-300 rounded focus:border-transparent focus:outline-none focus:ring-4 focus:ring-blue-200"/>
+              <input type="email" id="email" name="email" value={formData.email}  onChange={handleChange} autoFocus className="px-4 py-2 transition duration-300 border border-gray-300 rounded focus:border-transparent focus:outline-none focus:ring-4 focus:ring-blue-200" required />
+              {errors.email && <p className="text-red-500">{errors.email[0]}</p>}
             </div>
             <div className="flex flex-col space-y-1">
               <div className="flex items-center justify-between">
                 <label htmlFor="password" className="text-sm font-semibold text-gray-500">Mot de passe</label>
-                <a href="#" className="text-sm text-blue-600 hover:underline focus:text-blue-800">Mot de passe oublié?</a>
+                <a href="/reset" className="text-sm text-blue-600 hover:underline focus:text-blue-800">Mot de passe oublié?</a>
               </div>
-              <input type="password" id="password" name="password" value={formData.password}  onChange={handleChange} className="px-4 py-2 transition duration-300 border border-gray-300 rounded focus:border-transparent focus:outline-none focus:ring-4 focus:ring-blue-200"/>
+              <input type="password" id="password" name="password" value={formData.password}  onChange={handleChange} className="px-4 py-2 transition duration-300 border border-gray-300 rounded focus:border-transparent focus:outline-none focus:ring-4 focus:ring-blue-200" required />
+              {errors.password && <p className="text-red-500">{errors.password[0]}</p>}
             </div>
             <div className="flex items-center space-x-2">  
               <input type="checkbox" id="remember" className="w-4 h-4 transition duration-300 rounded focus:ring-2 focus:ring-offset-0 focus:outline-none focus:ring-blue-200"/>

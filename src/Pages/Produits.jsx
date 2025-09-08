@@ -1,6 +1,9 @@
+import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import { MdDeleteSweep, MdEdit } from "react-icons/md";
 import { useOutletContext } from "react-router-dom";
+import QRCode from "qrcode";
 
 export default function Produits() {
 
@@ -10,6 +13,7 @@ export default function Produits() {
     const [categories, setCategories] = useState([]);
     const token = localStorage.getItem("token");
     const [editForm, setEditForm] = useState(false);
+    const [errors, setErrors] = useState({});
     const [editingId, setEditingId] = useState(null);
     const { q } = useOutletContext();
 
@@ -78,19 +82,14 @@ export default function Produits() {
       body: data
     });
 
+    
     if (!res.ok) {
-      const errorData = await res.json();
-      console.error("Erreurs de validation :", errorData.errors);
-      return;
+       const errorData = await res.json();
+    setErrors(errorData.errors || {});
+    throw new Error(errorData.message || "Échec de connexion");
     }
-
-    setFormData({
-      image: "",
-      nom: "",
-      description: "",
-      prix_unitaire: "",
-      categorie_id: "",
-    });
+    toast.success("Nouveau produit enregistre avec succes");
+    setFormData({ image: "", nom: "", description: "", prix_unitaire: "", categorie_id: "",});
     setShowForm(false);
     fetchProduits();
   } catch (error) {
@@ -117,6 +116,7 @@ const handleChange = (e) => {
         Authorization: `Bearer ${token}`,
       },
     });
+    toast.success("Produit supprime avec succes");
     fetchProduits(); 
   } catch (err) {
     console.error("Erreur lors de la suppression :", err);
@@ -152,11 +152,11 @@ const edit = async (e) => {
     });
 
     if (!res.ok) {
-      const errorData = await res.json();
-      console.error("Erreurs de validation :", errorData.errors);
-      return;
+       const errorData = await res.json();
+    setErrors(errorData.errors || {});
+    throw new Error(errorData.message || "Échec de connexion");
     }
-
+    toast.success("Produit mis a jour avec succes");
     setFormData({image: "", nom: "", description: "", prix_unitaire: "", categorie_id: "",});
     setEditingId(null);
     setEditForm(false);
@@ -166,10 +166,34 @@ const edit = async (e) => {
   }
 };
 
+const printQRCode = async (produit) => {
+  const qrDataUrl = await QRCode.toDataURL(`Produit ID: ${produit.id}`);
+
+  const printWindow = window.open("", "QRPrint");
+  printWindow.document.open(); 
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>QR Code</title>
+      </head>
+      <body style="text-align:center; font-family:sans-serif; margin: 50px;">
+        <img src="${qrDataUrl}" width="200" height="200" />
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+
+  printWindow.onload = () => {
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+  };
+};
+
 
   return (
    <> 
-   
+   <Toaster position="top-right" />
   <button onClick={() => setShowForm(!showForm)} className="mb-4 px-6 py-2.5  bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg transition duration-150 ">
         Créer
     </button>
@@ -179,6 +203,9 @@ const edit = async (e) => {
             <tr>
                 <th scope="col" className="px-6 py-3">
                     Image
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  QR Code
                 </th>
                 <th scope="col" className="px-6 py-3">
                     Nom
@@ -208,6 +235,10 @@ const edit = async (e) => {
                           <img src={`http://localhost:8000/uploads/products/${produit.image}`} className="h-10 w-10 object-cover rounded" />
                         )}
                     </th>
+                    <td className="px-6 py-4 cursor-pointer" onClick={() => printQRCode(produit)}>
+                      <QRCodeSVG value={`Produit ID: ${produit.id}`} size={40} bgColor="#ffffff" fgColor="#000000" includeMargin={true}/>
+                    </td>
+
                     <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                         {produit.nom}
                     </th>
@@ -238,19 +269,22 @@ const edit = async (e) => {
         <form onSubmit={submit} className='flex flex-col gap-2' encType="multipart/form-data">
           
                 <div className="form-group mb-6">
-                  <input type='text' name='nom' value={formData.nom} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder=" Nom"   />
+                  <input type='text' name='nom' value={formData.nom} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder=" Nom"  required />
+                   {errors.nom && <p className="text-red-500 text-sm">{errors.nom[0]}</p>}
                 </div>
 
                  <div className="form-group mb-6">
-                  <input type='text' name='description' value={formData.description} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder="Description"   />
+                  <input type='text' name='description' value={formData.description} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder="Description" required  />
+                   {errors.description && <p className="text-red-500 text-sm">{errors.description[0]}</p>}
                 </div>
                  <div className="form-group mb-6">
-                  <input type='text' name='prix_unitaire' value={formData.prix_unitaire} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder="Prix unitaire"   />
+                  <input type='text' name='prix_unitaire' value={formData.prix_unitaire} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder="Prix unitaire"  required />
+                   {errors.prix_unitaire && <p className="text-red-500 text-sm">{errors.prix_unitaire[0]}</p>}
                 </div>
                  
                  <div className="form-group mb-6">
                    <select id="categorie_id" name="categorie_id" value={formData.categorie_id}  onChange={handleChange} 
-                    className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700">
+                    className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700" required >
                     <option value="" >-- Sélectionner une catégorie --</option>
                     {categories.map((categorie) => (
                       <option key={categorie.id} value={categorie.id}>
@@ -258,9 +292,11 @@ const edit = async (e) => {
                       </option>
                     ))}
                   </select>
+                   {errors.categorie_id && <p className="text-red-500 text-sm">{errors.categorie_id[0]}</p>}
                 </div>
                 <div className="form-group mb-6">
-                  <input type='file' name='image' onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"    />
+                  <input type='file' name='image' onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"  required />
+                   {errors.image && <p className="text-red-500 text-sm">{errors.image[0]}</p>}
                 </div>
 
                 <div className="flex gap-4 mt-4">
@@ -268,7 +304,7 @@ const edit = async (e) => {
                   Ajouter
                   </button>
 
-                  <button onClick={() => setShowForm(false)} className="flex-1 px-6 py-2.5 bg-red-400 text-white font-medium text-sm uppercase rounded shadow-md hover:bg-red-500 hover:shadow-lg ">
+                  <button onClick={() => { setShowForm(false); setFormData({ image: "", nom: "", description: "", prix_unitaire: "", categorie_id: "",});}} className="flex-1 px-6 py-2.5 bg-red-400 text-white font-medium text-sm uppercase rounded shadow-md hover:bg-red-500 hover:shadow-lg ">
                       Annuler
                   </button>
                 </div>
@@ -286,18 +322,21 @@ const edit = async (e) => {
           
                 <div className="form-group mb-6">
                   <input type='text' name='nom' value={formData.nom} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder=" Nom"   />
+                   {errors.nom && <p className="text-red-500 text-sm">{errors.nom[0]}</p>}
                 </div>
 
                  <div className="form-group mb-6">
-                  <input type='text' name='description' value={formData.description} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder="Description"   />
+                  <input type='text' name='description' value={formData.description} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder="Description" required  />
+                   {errors.description && <p className="text-red-500 text-sm">{errors.description[0]}</p>}
                 </div>
                  <div className="form-group mb-6">
-                  <input type='text' name='prix_unitaire' value={formData.prix_unitaire} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder="Prix unitaire"   />
+                  <input type='text' name='prix_unitaire' value={formData.prix_unitaire} onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" placeholder="Prix unitaire" required  />
+                   {errors.prix_unitaire && <p className="text-red-500 text-sm">{errors.prix_unitaire[0]}</p>}
                 </div>
                  
                  <div className="form-group mb-6">
                    <select id="categorie_id" name="categorie_id" value={formData.categorie_id}  onChange={handleChange} 
-                    className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700">
+                    className="block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm text-gray-700" required >
                     <option value="" >-- Sélectionner une catégorie --</option>
                     {categories.map((categorie) => (
                       <option key={categorie.id} value={categorie.id}>
@@ -305,9 +344,11 @@ const edit = async (e) => {
                       </option>
                     ))}
                   </select>
+                   {errors.categorie_id && <p className="text-red-500 text-sm">{errors.categorie_id[0]}</p>}
                 </div>
                 <div className="form-group mb-6">
-                  <input type='file' name='image' onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none"/>
+                  <input type='file' name='image' onChange={handleChange} className="form-control w-full px-3 py-1.5 text-base font-normal  text-gray-700  bg-white bg-clip-padding border border-solid border-gray-300 rounded transition ease-in-out m-0  focus:text-gray-700 focus:bg-white focus:border-blue-600 focus:outline-none" />
+                   {errors.image && <p className="text-red-500 text-sm">{errors.image[0]}</p>}
                 </div>
 
                 <div className="flex gap-4 mt-4">

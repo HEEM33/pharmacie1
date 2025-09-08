@@ -5,7 +5,7 @@ export default function Home() {
       style={{ backgroundImage: "url('/pharma.png')" }}
     >
       <h1 className="text-white text-4xl ">
-        Bienvenue???
+        Bienvenue!
       </h1>
     </div>
   );

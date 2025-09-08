@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 import { MdDeleteSweep, MdEdit } from "react-icons/md";
 import { useOutletContext } from "react-router-dom";
 
@@ -7,7 +8,8 @@ export default function Fournisseur() {
   const [showForm, setShowForm] = useState(false);
   const [editForm, setEditForm] = useState(false);
   const [fournisseurs, setFournisseurs] = useState([]);
-  const [editingId, setEditingId] = useState(null); 
+  const [editingId, setEditingId] = useState(null);
+  const [errors, setErrors] = useState({}); 
   const token = localStorage.getItem("token");
   const { q } = useOutletContext();
 
@@ -36,7 +38,7 @@ export default function Fournisseur() {
 
   const submit = async (e) => {
     e.preventDefault();
-    await fetch("/api/fournisseur", {
+   const res = await fetch("/api/fournisseur", {
       method: "POST",
       headers: { 
         "Content-Type": "application/json",
@@ -44,6 +46,12 @@ export default function Fournisseur() {
       },
       body: JSON.stringify(formData),
     });
+    if (!res.ok) {
+       const errorData = await res.json();
+    setErrors(errorData.errors || {});
+    throw new Error(errorData.message || "Échec de connexion");
+    }
+    toast.success("Nouveau fournisseur enregistre avec succes");
     setFormData({ nom: "", adresse: "", telephone: "" });
     setShowForm(false);
     fetchFournisseurs();
@@ -55,6 +63,7 @@ export default function Fournisseur() {
         method: "DELETE",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
+      toast.success("Fournisseur supprime avec succes");
       fetchFournisseurs();
     } catch (err) {
       console.error("Erreur lors de la suppression :", err);
@@ -71,7 +80,7 @@ export default function Fournisseur() {
     e.preventDefault();
     if (!editingId) return;
 
-    await fetch(`/api/fournisseur/${editingId}`, {
+   const res = await fetch(`/api/fournisseur/${editingId}`, {
       method: "PUT",
       headers: { 
         "Content-Type": "application/json",
@@ -79,7 +88,12 @@ export default function Fournisseur() {
       },
       body: JSON.stringify(formData),
     });
-
+    if (!res.ok) {
+       const errorData = await res.json();
+    setErrors(errorData.errors || {});
+    throw new Error(errorData.message || "Échec de connexion");
+    }
+    toast.success("Fournisseur mis a jour avec succes");
     setFormData({ nom: "", adresse: "", telephone: ""  });
     setEditingId(null);
     setEditForm(false);
@@ -88,6 +102,7 @@ export default function Fournisseur() {
 
   return (
     <>
+    <Toaster position="top-right" />
       <button
         onClick={() => setShowForm(!showForm)} className="mb-4 px-6 py-2.5 bg-blue-600 text-white font-medium text-xs leading-tight uppercase rounded shadow-md hover:bg-blue-700 hover:shadow-lg transition duration-150">
         Ajouter
@@ -123,9 +138,12 @@ export default function Fournisseur() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <form onSubmit={submit} className="flex flex-col gap-2">
-              <input type="text" name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" className="form-control w-full px-3 py-1.5 border rounded" />
-              <input type="text" name="adresse" value={formData.adresse} onChange={handleChange} placeholder="Adresse" className="form-control w-full px-3 py-1.5 border rounded"/>
-            <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} placeholder="Telephone" className="form-control w-full px-3 py-1.5 border rounded"/>
+              <input type="text" name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" className="form-control w-full px-3 py-1.5 border rounded" required />
+              {errors.nom && <p className="text-red-500">{errors.nom[0]}</p>}
+              <input type="text" name="adresse" value={formData.adresse} onChange={handleChange} placeholder="Adresse" className="form-control w-full px-3 py-1.5 border rounded" required />
+              {errors.adresse && <p className="text-red-500">{errors.adresse[0]}</p>}
+            <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} placeholder="Telephone" className="form-control w-full px-3 py-1.5 border rounded" required />
+            {errors.telephone && <p className="text-red-500">{errors.telephone[0]}</p>}
               <div className="flex gap-4 mt-4">
                 <button type="submit" className="flex-1 px-6 py-2.5 bg-blue-600 text-white rounded">Ajouter</button>
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 px-6 py-2.5 bg-red-400 text-white rounded">Annuler</button>
@@ -139,9 +157,12 @@ export default function Fournisseur() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <form onSubmit={edit} className="flex flex-col gap-2">
-              <input type="text" name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" className="form-control w-full px-3 py-1.5 border rounded" />
-              <input type="text" name="adresse" value={formData.adresse} onChange={handleChange} placeholder="Adresse" className="form-control w-full px-3 py-1.5 border rounded"/>
-            <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} placeholder="Telephone" className="form-control w-full px-3 py-1.5 border rounded"/>
+              <input type="text" name="nom" value={formData.nom} onChange={handleChange} placeholder="Nom" className="form-control w-full px-3 py-1.5 border rounded" required />
+              {errors.nom && <p className="text-red-500">{errors.nom[0]}</p>}
+              <input type="text" name="adresse" value={formData.adresse} onChange={handleChange} placeholder="Adresse" className="form-control w-full px-3 py-1.5 border rounded" required />
+              {errors.adresse && <p className="text-red-500">{errors.adresse[0]}</p>}
+            <input type="text" name="telephone" value={formData.telephone} onChange={handleChange} placeholder="Telephone" className="form-control w-full px-3 py-1.5 border rounded" required />
+            {errors.telephone && <p className="text-red-500">{errors.telephone[0]}</p>}
               <div className="flex gap-4 mt-4">
                 <button type="submit" className="flex-1 px-6 py-2.5 bg-blue-600 text-white rounded">Modifier</button>
                 <button type="button" onClick={() => setEditForm(false)} className="flex-1 px-6 py-2.5 bg-red-400 text-white rounded">Annuler</button>

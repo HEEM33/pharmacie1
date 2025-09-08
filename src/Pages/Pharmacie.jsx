@@ -3,6 +3,7 @@ import './pharmacie.css'
 import { MdDeleteSweep } from "react-icons/md";
 import { FaCartPlus } from "react-icons/fa";
 import { useOutletContext } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function Pharmacie(){
   const [categories, setCategories] = useState([]);
@@ -30,6 +31,7 @@ export default function Pharmacie(){
       const data = await res.json();
       setProduits(data);
       setIsLoading(false);
+    
     } catch (error) {
       console.error("Erreur lors de la récupération des produits :", error);
     }
@@ -62,16 +64,25 @@ export default function Pharmacie(){
   };
 
   const addToCart = (produit) => {
-    setCart(prevCart => {
-      const existing = prevCart.find(item => item.id === produit.id);
-      if (existing) {
-        return prevCart.map(item =>
-          item.id === produit.id ? { ...item, qty: item.qty + 1 } : item
-        );
+  if (produit.niveau_en_stock <= 0) {
+    toast.error("Quantité insuffisante en stock !");
+    return;
+  }
+
+  setCart(prevCart => {
+    const existing = prevCart.find(item => item.id === produit.id);
+    if (existing) {
+      if (existing.qty + 1 > produit.niveau_en_stock) {
+        toast.error("Vous ne pouvez pas ajouter plus que le stock disponible !");
+        return prevCart;
       }
-      return [...prevCart, { ...produit, qty: 1 }];
-    });
-  };
+      return prevCart.map(item =>
+        item.id === produit.id ? { ...item, qty: item.qty + 1 } : item
+      );
+    }
+    return [...prevCart, { ...produit, qty: 1 }];
+  });
+};
 
   const removeFromCart = (produitId) => {
     setCart(prevCart => prevCart.filter(item => item.id !== produitId));
@@ -120,6 +131,8 @@ const enregistrer = async () => {
 
     const data = await res.json();
     console.log("Vente enregistrée :", data);
+      toast.success("Vente enregistre");
+
 
     setCart([]);
 
@@ -127,8 +140,10 @@ const enregistrer = async () => {
     console.error("Erreur :", error);
   }
 };
+
     return(
         <>
+        <Toaster position="top-right" />
       <div className="flex gap-2 mt-4">
     <div className="container mx-auto px-4">
       <h2 className="text-2xl font-bold mb-4 uppercase">Pharmacie</h2>
@@ -156,7 +171,7 @@ const enregistrer = async () => {
   {filtered
     .map((produit) => (
       <div key={produit.id} className="w-[150px] h-[185px] rounded-lg overflow-hidden shadow-md bg-white m-3 transition-transform duration-200 hover:scale-105">
-        <img src={`http://localhost:8000/uploads/products/${produit.image}`} alt="Card" className="w-full h-[110px] object-cover" />
+        <img src={`http://localhost:8000/uploads/products/${produit.image}`} alt="Card" className="w-full h-[110px] bg-cover" />
         <div className="p-2">
           <h3 className="text-sm font-semibold">{produit.nom}</h3>
           <p className="text-xs text-gray-600 truncate">{produit.description}</p>
@@ -170,7 +185,7 @@ const enregistrer = async () => {
 
 {/*panier*/}
 
-<div className="bg-white shadow-lg rounded-xl p-6 w-full md:w-1/3">
+<div className="bg-white shadow-lg rounded-xl p-2 w-full md:w-1/3">
   <h3 className="text-xl font-bold mb-4 border-b pb-2">🛒 Votre panier</h3>
 
   {cart.length === 0 ? (
