@@ -13,11 +13,25 @@ export default function Stock() {
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
   const [errors, setErrors] = useState({});
-   const { q } = useOutletContext();
+  const { q } = useOutletContext();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const filtered = stocks.filter(s =>
   s.produit?.nom.toLowerCase().includes(q.toLowerCase())
 );
+
+const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filtered.slice(indexOfFirstItem, indexOfLastItem);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const fetchStocks = useCallback(async () => {
       try {
@@ -77,7 +91,7 @@ export default function Stock() {
   }, [token]);
 
   const ajouterStock = async () => {
-    if (!selectedId ||!selectedProduit || !quantite) return alert("Veuillez remplir tous les champs");
+    if (!selectedId ||!selectedProduit || !quantite) ;
 
     try {
       const res = await fetch("http://localhost:8000/api/stock", {
@@ -100,25 +114,24 @@ export default function Stock() {
     }
 
       const data = await res.json();
-      console.log("jjj", data)
       setStocks(prev => [...prev, data.entree_stock]);
-      toast.success("Nouvel entree en stock");
+      toast.success("Nouvel entrée en stock");
       setSelectedId("");
       setSelectedProduit("");
       setQuantite("");
       fetchStocks();
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de l'ajout en stock");
     }
   };
+  
   
 
   return (
     <>
     <Toaster position="top-right" />
     <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Entrée en Stock</h2>
+      <h2 className="text-2xl font-bold mb-4 uppercase">Entrée en Stock</h2>
 
       <div className="mb-6 p-4 bg-white shadow rounded">
         <h3 className="font-semibold mb-2">Ajouter une entrée en stock</h3>
@@ -156,19 +169,20 @@ export default function Stock() {
             <span className="sr-only">Loading...</span>
           </div>
         ) : (
-          <table className="w-full text-left border">
-            <thead>
+          <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+          <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
               <tr>
-                <th className="border px-2 py-1">Produit</th>
-                <th className="border px-2 py-1">Quantité</th>
-                <th className="border px-2 py-1">Date</th>
+                <th className="px-6 py-4">Produit</th>
+                <th className="px-6 py-4">Quantité</th>
+                <th className="px-6 py-4">Date</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(s => (
+               {currentItems.map(s => (
                 <tr key={s.id}>
-                  <td className="border px-2 py-1">{s.produit.nom}</td>
-                  <td className="border px-2 py-1">{s.quantite}</td>
+                  <td className="px-6 py-4">{s.produit.nom}</td>
+                  <td className="px-6 py-4">{s.quantite}</td>
                   <td> {new Date(s.created_at).toLocaleDateString("fr-FR", {
                     day: "2-digit",
                     month: "2-digit",
@@ -182,9 +196,26 @@ export default function Stock() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>
+    {/* pagination */}
+              <div className="flex justify-center items-center gap-2 mt-4">
+                <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}
+                  className="px-4 py-2 text-sm border rounded-lg bg-white hover:bg-gray-100 disabled:opacity-50">
+                  Précédent
+                </button>
+
+                <span>
+                  Page {currentPage} / {totalPages}
+                </span>
+
+                <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}
+                  className="px-4 py-2 text-sm border rounded-lg bg-white hover:bg-gray-100 disabled:opacity-50">
+                  Suivant
+                </button>
+              </div>
     </>
   );
 }

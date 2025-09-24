@@ -1,11 +1,11 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
-import { MdGroupAdd, MdMenuOpen, MdNotificationsNone, MdReceiptLong } from "react-icons/md"
+import { MdGroupAdd, MdMenuOpen, MdNotificationsNone, MdPassword, MdReceiptLong } from "react-icons/md"
 import { IoHomeOutline } from "react-icons/io5"
 import { FaBoxes, FaCashRegister, FaHandHoldingMedical, FaProductHunt, FaTruck, FaUserCircle } from "react-icons/fa"
 import { TbBrandStocktwits, TbCategoryPlus, TbReportSearch } from "react-icons/tb"
-import { IoLogoBuffer } from "react-icons/io"
+import { IoIosLogOut, IoLogoBuffer } from "react-icons/io"
 import { CiSearch, CiSettings } from "react-icons/ci"
 import { MdOutlineDashboard } from "react-icons/md"
 import { AuthContext } from './AuthContext'
@@ -13,18 +13,30 @@ import { BsUpcScan } from 'react-icons/bs'
 import { AiOutlineUnorderedList } from 'react-icons/ai'
 import toast, { Toaster } from 'react-hot-toast'
 
-const menuItems = [
-  { icon: <MdOutlineDashboard size={20} />, label: 'Dashboard', path: 'dashboard' },
-  { icon: <MdGroupAdd  size={20} />, label: 'Utilisateur', path: 'utilisateurs' },
-  { icon: <BsUpcScan size={20} />, label: 'qr', path: 'qr' },
-  { icon: <FaCashRegister size={20} />, label: 'Paiement', path: 'paiement' },
-  { icon: <FaHandHoldingMedical size={20} />, label: 'Pharmacie', path: 'pharmacie' },
-  { icon: <FaProductHunt size={20} />, label: 'Produits', path: 'produits'  },
-  { icon: <TbCategoryPlus size={20} />, label: 'Categories', path: 'categories'  },
-  { icon: <FaBoxes size={20} />, label: 'Stocks', path: 'stock'  },
-  { icon: <MdReceiptLong size={20} />, label: 'Commande', path: 'commande'  },
-  { icon: <FaTruck size={20} />, label: 'Fournisseur', path: 'fournisseur'  },
-]
+
+
+const getMenuItems = (role) => {
+  const menuByRole = {
+    admin: [
+     { icon: <MdOutlineDashboard size={20} />, label: 'Dashboard', path: 'dashboard' },
+      { icon: <MdGroupAdd  size={20} />, label: 'Utilisateur', path: 'utilisateurs' },
+      { icon: <BsUpcScan size={20} />, label: 'Qr', path: 'qr' },
+      { icon: <FaProductHunt size={20} />, label: 'Produits', path: 'produits'  },
+      { icon: <TbCategoryPlus size={20} />, label: 'Categories', path: 'categories'  },
+      { icon: <FaBoxes size={20} />, label: 'Stocks', path: 'stock'  },
+      { icon: <MdReceiptLong size={20} />, label: 'Commande', path: 'commande'  },
+      { icon: <FaTruck size={20} />, label: 'Fournisseur', path: 'fournisseur'  },
+    ],
+    pharmacien: [
+      { icon: <FaHandHoldingMedical size={20} />, label: 'Pharmacie', path: 'pharmacie' },
+    ],
+    caissier: [
+      { icon: <FaCashRegister size={20} />, label: 'Paiement', path: 'paiement' },
+    ],
+  };
+
+  return menuByRole[role]; 
+};
 
 export default function Layout() {
   const [open, setOpen] = useState(false)
@@ -34,11 +46,12 @@ export default function Layout() {
   const [q, setQ] = useState("")                          
   const inputRef = useRef(null) 
   const navigate = useNavigate();
-  const { token, user, logout } = useContext(AuthContext);
+  const { token, user, logout, roles } = useContext(AuthContext);
   const [alertes, setAlertes] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [errors, setErrors] = useState({});
+  const menuItems = getMenuItems(roles);
   const [formData, setFormData] = useState({email: "", ancienpassword: "", password: "", confirmPassword: "" });
 
   useEffect(() => {
@@ -99,9 +112,16 @@ const handleChange = (e) => {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrors(data.errors || {});
-        throw new Error(data.message || "Échec de la réinitialisation");
-      }
+      toast.error(data.message || "Échec de la réinitialisation");
+
+      const fieldErrors = {};
+      if (data.message.includes("ancien mot de passe")) fieldErrors.ancienpassword = [data.message];
+      else if (data.message.includes("email")) fieldErrors.email = [data.message];
+      else if (data.message.includes("confirmation")) fieldErrors.password_confirmation = [data.message];
+      setErrors(fieldErrors);
+
+      return;
+    }
       setShowForm(false);
       toast.success("Votre mot de passe a ete reinitialise ");
       
@@ -115,7 +135,7 @@ const handleChange = (e) => {
     <Toaster position="top-right" />
     <div className="flex h-screen overflow-hidden">
       <nav className={`bg-green-600 text-white p-4 flex flex-col duration-300 ${open ? 'w-60' : 'w-16'}`}>
-        <div className="flex h-screen items-center justify-between mb-6">
+        <div className="flex items-center mb-6">
           <MdMenuOpen size={28} className={`cursor-pointer transition-transform ${!open && 'rotate-180'}`} onClick={() => setOpen(!open)}/>
         </div>
 
@@ -183,13 +203,13 @@ const handleChange = (e) => {
                 </div>
                   <ul className="py-2 text-sm text-gray-700 dark:text-gray-200">
                     <li>
-                      <a onClick={() => setShowForm(!showForm)} className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">
-                        Mot de passe
+                      <a onClick={() => setShowForm(!showForm)} className="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white cursor-pointer">
+                       <MdPassword /> Mot de passe
                       </a>
                       {showForm && (
                         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
                       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
-                        <button className="absolute top-2 right-2 text-gray-500 hover:text-red-700" onClick={() => setShowForm(false)} >
+                        <button className="absolute top-2 right-2 text-gray-500 hover:text-red-700 cursor-pointer" onClick={() => setShowForm(false)} >
                             ✕
                           </button>
                       <h3 className="my-4 text-2xl font-semibold text-gray-700">Changer de mot de passe</h3>
@@ -232,8 +252,8 @@ const handleChange = (e) => {
                     </li>
                   </ul>
                   <div className="py-2">
-                    <button onClick={handleLogout} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">
-                      Se deconnecter
+                    <button onClick={handleLogout} className="w-full flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white">
+                     <IoIosLogOut /> Se deconnecter
                     </button>
               </div>
             </div>

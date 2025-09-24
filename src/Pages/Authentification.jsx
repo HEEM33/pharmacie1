@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../components/AuthContext";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function Login(){
     const [formData, setFormData] = useState({ email: "", password: "" });
@@ -28,9 +29,9 @@ const submit = async (e) => {
 
     const data = await res.json();
     if (!res.ok) {
-       const errorData = await res.json();
-    setErrors(errorData.errors || {});
-    throw new Error(errorData.message || "Échec de connexion");
+       setErrors(data.errors || {});
+    toast.error(data.message || "Échec de connexion");
+    return; 
     }
 
     login(data.access_token, data.user, data.roles);
@@ -47,6 +48,7 @@ const submit = async (e) => {
 
     return(
         <>
+        <Toaster position="top-right"/>
        <div className="flex items-center min-h-screen p-4 bg-gray-100 lg:justify-center">
       <div className="flex flex-col overflow-hidden bg-white rounded-md shadow-lg max md:flex-row md:flex-1 lg:max-w-screen-md">
         <div className="p-4 py-6 text-white  md:w-80 md:flex-shrink-0 md:flex md:flex-col md:items-center md:justify-evenly  bg-cover" style={{ backgroundImage: "url('/pharmacien.png')" }}>          

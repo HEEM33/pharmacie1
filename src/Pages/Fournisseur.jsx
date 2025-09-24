@@ -12,10 +12,23 @@ export default function Fournisseur() {
   const [errors, setErrors] = useState({}); 
   const token = localStorage.getItem("token");
   const { q } = useOutletContext();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const filtered = fournisseurs.filter(p =>
     p.nom.toLowerCase().includes(q.toLowerCase())
   );
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filtered.slice(indexOfFirstItem, indexOfLastItem);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
   const fetchFournisseurs = useCallback(async () => {
     try {
       const res = await fetch("/api/fournisseur", {
@@ -51,7 +64,7 @@ export default function Fournisseur() {
     setErrors(errorData.errors || {});
     throw new Error(errorData.message || "Échec de connexion");
     }
-    toast.success("Nouveau fournisseur enregistre avec succes");
+    toast.success("Nouveau fournisseur enregistré avec succes");
     setFormData({ nom: "", adresse: "", telephone: "" });
     setShowForm(false);
     fetchFournisseurs();
@@ -63,7 +76,7 @@ export default function Fournisseur() {
         method: "DELETE",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       });
-      toast.success("Fournisseur supprime avec succes");
+      toast.success("Fournisseur supprimé avec succes");
       fetchFournisseurs();
     } catch (err) {
       console.error("Erreur lors de la suppression :", err);
@@ -119,7 +132,7 @@ export default function Fournisseur() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((fournisseur, index) => (
+            {currentItems.map((fournisseur, index) => (
               <tr key={index} className="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200">
                 <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">{fournisseur.nom}</td>
                 <td className="px-6 py-4">{fournisseur.adresse}</td>
@@ -151,7 +164,25 @@ export default function Fournisseur() {
             </form>
           </div>
         </div>
+        
       )}
+
+      {/* pagination */}
+              <div className="flex justify-center items-center gap-2 mt-4">
+                <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}
+                  className="px-4 py-2 text-sm border rounded-lg bg-white hover:bg-gray-100 disabled:opacity-50">
+                  Précédent
+                </button>
+
+                <span>
+                  Page {currentPage} / {totalPages}
+                </span>
+
+                <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}
+                  className="px-4 py-2 text-sm border rounded-lg bg-white hover:bg-gray-100 disabled:opacity-50">
+                  Suivant
+                </button>
+              </div>
 
       {editForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

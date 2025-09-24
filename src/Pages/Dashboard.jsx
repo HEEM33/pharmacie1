@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {BarChart,Bar,LineChart,Line,XAxis,YAxis,Tooltip,CartesianGrid,ResponsiveContainer,} from "recharts";
+import {BarChart,Bar,LineChart,Line,XAxis,YAxis,Tooltip,CartesianGrid,ResponsiveContainer, PieChart, Pie, Cell,} from "recharts";
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -42,6 +42,15 @@ export default function Dashboard() {
     total: item.total,
   }));
 
+  const topProduits = (data.topProduits || []).map(p => ({
+  ...p,
+  quantite: Number(p.quantite),
+}));
+
+  console.log("Top Produits:", topProduits);
+
+  const COLORS = ["#4F46E5", "#22C55E", "#F97316"];
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <header className="mb-8">
@@ -79,6 +88,23 @@ export default function Dashboard() {
             {data.alertes.length}
           </p>
         </div>
+       <div className="bg-white p-6 rounded-2xl shadow ">
+          <h2 className="text-gray-500 text-sm mb-4">
+             Produits les plus vendus
+          </h2>
+          <div className="h-64">
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie data={topProduits} dataKey="quantite" nameKey="nom" outerRadius={80} label>
+                  {topProduits.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
@@ -100,28 +126,35 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-white p-6 rounded-2xl shadow">
-          <h2 className="text-lg font-bold text-gray-700 mb-4">
-            Produits en alerte
-          </h2>
-          {data.alertes.length === 0 ? (
-            <p className="text-gray-500"> Aucun produit en alerte</p>
-          ) : (
-            <ul className="space-y-3">
-              {data.alertes.map((prod) => (
-                <li key={prod.id} className="flex justify-between text-sm">
-                  <span>{prod.nom}</span>
-                  {prod.niveau_en_stock < 10 ? (
-                    <span className="text-red-600 font-semibold">Stock bas</span>
-                  ) : (
-                    <span className="text-orange-500 font-semibold">
-                      Expiration proche
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+  <h2 className="text-lg font-bold text-gray-700 mb-4">
+    Transactions Récentes
+  </h2>
+  {data.transactionsRecentes.length === 0 ? (
+    <p className="text-gray-500">Aucune transaction récente</p>
+  ) : (
+    <ul className="space-y-3">
+      {data.transactionsRecentes.map((vente) => (
+        <li key={vente.id} className="text-sm border-b pb-2">
+          <div className="flex justify-between">
+            <span className="font-semibold">{vente.user}</span>
+            <span className="text-gray-500">{vente.date}</span>
+          </div>
+          <div className="text-gray-700">
+            Produits :{" "}
+            {vente.produits.map((p) => `${p.nom} (x${p.quantite})`).join(", ")}
+          </div>
+          <div className="text-green-600 font-bold">
+            Total : {new Intl.NumberFormat("fr-FR", {
+              style: "currency",
+              currency: "XOF",
+            }).format(vente.total)}
+          </div>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
+
       </div>
     </div>
   );

@@ -56,7 +56,7 @@ const [formData, setFormData] = useState({ name: "", email: "", role_id: "" });
     throw new Error(errorData.message || "Échec de connexion");
      
     }
-    toast.success("Utilisateur ajoute avec succes");
+    toast.success("Nouvel utilisateur crée avec succes");
     setFormData({ name: "", email: "", role_id: ""  });
     setShowForm(false);
     fetchUsers();
@@ -91,7 +91,7 @@ useEffect(() => {
         Authorization: `Bearer ${token}`,
       },
     });
-    toast.success("Suppression reussi");
+    toast.success("Vous venez de supprimer cet utilisateur");
     fetchUsers(); 
   } catch (err) {
     console.error("Erreur lors de la suppression :", err);
@@ -121,7 +121,7 @@ const startEdit = (user) => {
     setErrors(errorData.errors || {});
     throw new Error(errorData.message || "Échec de connexion");
     }
-    toast.success("Vous avez modifier l'utilisateur");
+    toast.success("Vous avez modifier cet utilisateur");
     setFormData({ name: "", email: "", role_id:"" });
     setEditingId(null);
     setEditForm(false);

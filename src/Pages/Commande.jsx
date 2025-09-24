@@ -14,10 +14,23 @@ export default function Commande() {
   const [errors, setErrors] = useState({});
   const token = localStorage.getItem("token");
   const { q } = useOutletContext();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const filtered = commandes.filter(c =>
     c.created_at.toLowerCase().includes(q.toLowerCase())
   );
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filtered.slice(indexOfFirstItem, indexOfLastItem);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -112,10 +125,10 @@ export default function Commande() {
     <>
      <Toaster position="top-right" />
     <div className="p-4">
-      <h2>📦 Nouvelle des Commandes</h2>
+      <h1 className="text-2xl font-bold mb-4 uppercase"> Nouvelle des Commandes</h1>
       <form onSubmit={handleSubmit}  className="flex flex-wrap gap-4 items-center mb-6">
         <select value={selectedFournisseur} onChange={(e) => setSelectedFournisseur(e.target.value)} className="border p-2 rounded" required>
-          <option value="">Sélectionner un fournisseur</option>
+          <option value="" disabled>Sélectionner un fournisseur</option>
           {fournisseurs.map((f) => (
             <option key={f.id} value={f.id}>
               {f.nom}
@@ -148,24 +161,35 @@ export default function Commande() {
         </button>
       </form>
 
-      <table border="1" cellPadding="8" style={{ borderCollapse: "collapse" }}>
-        <thead>
+      <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+      <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
           <tr>
-            <th>ID</th>
-            <th>Fournisseurs</th>
-            <th>Status</th>
-            <th>Date de commande</th>
-            <th>Date de reception</th>
-            <th>Actions</th>
+            <th className="px-6 py-4">ID</th>
+            <th className="px-6 py-4">Fournisseurs</th>
+            <th className="px-6 py-4">Produits</th>
+            <th className="px-6 py-4">Status</th>
+            <th className="px-6 py-4">Date de commande</th>
+            <th className="px-6 py-4">Date de reception</th>
+            <th className="px-6 py-4">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {filtered.map((commande) => (
+          {currentItems.map((commande) => (
             <tr key={commande.id}>
-              <td>{commande.id}</td>
-              <td>{commande.fournisseur?.nom}</td>
-              <td>{commande.status}</td>
-              <td> {new Date(commande.created_at).toLocaleDateString("fr-FR", {
+              <td className="px-6 py-4">{commande.id}</td>
+              <td className="px-6 py-4">{commande.fournisseur?.nom}</td>
+              <td className="px-6 py-4">
+                {commande.produits?.map((p, i) => (
+                  <span key={i}>
+                    {p.nom} ({p.pivot?.quantite})
+                    {i < commande.produits.length - 1 && ", "}
+                    {(i + 1) % 2 === 0 && <br />}
+                  </span>
+                ))}
+              </td>
+              <td className="px-6 py-4">{commande.status}</td>
+              <td className="px-6 py-4"> {new Date(commande.created_at).toLocaleDateString("fr-FR", {
                     day: "2-digit",
                     month: "2-digit",
                     year: "numeric",
@@ -192,7 +216,25 @@ export default function Commande() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
+    {/* pagination */}
+              <div className="flex justify-center items-center gap-2 mt-4">
+                <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}
+                  className="px-4 py-2 text-sm border rounded-lg bg-white hover:bg-gray-100 disabled:opacity-50">
+                  Précédent
+                </button>
+
+                <span>
+                  Page {currentPage} / {totalPages}
+                </span>
+
+                <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}
+                  className="px-4 py-2 text-sm border rounded-lg bg-white hover:bg-gray-100 disabled:opacity-50">
+                  Suivant
+                </button>
+              </div>
     </>
   );
+  
 }

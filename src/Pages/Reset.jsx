@@ -29,7 +29,7 @@ export default function Reset() {
         setErrors(data.errors || {});
         throw new Error(data.message || "Échec de la réinitialisation");
       }
-      toast.success("Votre mot de passe a ete reinitialise ");
+      toast.success("Votre mot de passe a ete reinitialisé ");
       setTimeout(() => {
         navigate("/authentification");
       }, 50);
