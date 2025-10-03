@@ -38,6 +38,9 @@ export default function Categories() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
+      setCategories(
+      data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    );
       setCategories(data);
       setLoading(false)
     } catch (error) {
@@ -68,6 +71,13 @@ export default function Categories() {
     setErrors(errorData.errors || {});
     throw new Error(errorData.message || "Échec de connexion");
     }
+    const newCategorie = await res.json();
+
+    setCategories(prev =>
+      [...prev, newCategorie].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      )
+    );
     toast.success("Categorie ajouter avec succes");
     setFormData({ nom: "", description: "" });
     setShowForm(false);

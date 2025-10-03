@@ -35,7 +35,9 @@ export default function Fournisseur() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      setFournisseurs(data);
+      setFournisseurs(
+        data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      );
     } catch (error) {
       console.error("Erreur lors de la récupération des fournisseurs :", error);
     }
@@ -64,6 +66,13 @@ export default function Fournisseur() {
     setErrors(errorData.errors || {});
     throw new Error(errorData.message || "Échec de connexion");
     }
+    const newFournisseur = await res.json();
+
+    setFournisseurs(prev =>
+      [...prev, newFournisseur].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      )
+    );
     toast.success("Nouveau fournisseur enregistré avec succes");
     setFormData({ nom: "", adresse: "", telephone: "" });
     setShowForm(false);

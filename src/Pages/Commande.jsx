@@ -47,7 +47,7 @@ export default function Commande() {
           }),
         ]);
 
-        setCommandes(await resCommandes.json());
+        setCommandes((await resCommandes.json()).sort((a, b) => b.id - a.id));
         setFournisseurs(await resFournisseurs.json());
         setProduits(await resProduits.json());
       } catch (err) {
@@ -81,7 +81,7 @@ export default function Commande() {
     throw new Error(errorData.message || "Échec de connexion");
     }
       const data = await res.json();
-      setCommandes([...commandes, data]);
+      setCommandes([...commandes, data].sort((a, b) => b.id - a.id));
       toast.success("Nouvelle commande enregistre avec succes");
       setSelectedFournisseur("");
       setItems([{ produit_id: "", quantite: 1 }]);

@@ -41,7 +41,9 @@ const indexOfLastItem = currentPage * itemsPerPage;
           },
         });
         const data = await res.json();
-        setStocks(data);
+        setStocks(
+          data.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+        );
         setLoading(false);
       } catch (error) {
         console.error("Erreur lors de la récupération des Stocks :", error);
@@ -109,6 +111,9 @@ const indexOfLastItem = currentPage * itemsPerPage;
 
       if (!res.ok) {
        const errorData = await res.json();
+       setStocks(
+          data.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+        );
     setErrors(errorData.errors || {});
     throw new Error(errorData.message || "Échec de connexion");
     }
@@ -183,12 +188,12 @@ const indexOfLastItem = currentPage * itemsPerPage;
                 <tr key={s.id}>
                   <td className="px-6 py-4">{s.produit.nom}</td>
                   <td className="px-6 py-4">{s.quantite}</td>
-                  <td> {new Date(s.created_at).toLocaleDateString("fr-FR", {
+                  <td> {new Date(s.updated_at).toLocaleDateString("fr-FR", {
                     day: "2-digit",
                     month: "2-digit",
                     year: "numeric",
                   })}{" "}
-                  {new Date(s.created_at).toLocaleTimeString("fr-FR", {
+                  {new Date(s.updated_at).toLocaleTimeString("fr-FR", {
                     hour: "2-digit",
                     minute: "2-digit",
                   })}</td>

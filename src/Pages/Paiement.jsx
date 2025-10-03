@@ -1,8 +1,7 @@
-import Echo from "laravel-echo";
-import Pusher from "pusher-js";
 import React, { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { FaCheck, FaPrint } from "react-icons/fa";
+import echoPromise from "../echo";
 
 export default function Paiement() {
   const [ventes, setVentes] = useState([]);
@@ -12,18 +11,8 @@ export default function Paiement() {
   const [montantRecu, setMontantRecu] = useState({});
   const [showCaisse, setShowCaisse] = useState({});
   const [showMobile, setShowMobile] = useState({});
+  const [echo, setEcho] = useState(null);
 
-  useEffect(() => {
-   window.Echo.channel("ventes-channel").listen(".vente.enAttente", (data) => {
-    console.log('Données reçues:', data);
-    
-    // Les données sont directement dans 'data', pas dans 'data.vente'
-    setVentes((prev) => [...prev, data]);
-    
-    if (data.produits && data.produits.length > 0) {
-      toast.success(`Nouvelle vente : ${data.produits[0].nom}`);
-    }
-  });
   const fetchVentes = async () => {
     try {
       const res = await fetch("http://localhost:8000/api/ventes-en-attente", {
@@ -32,18 +21,61 @@ export default function Paiement() {
           "Content-Type": "application/json",
         },
       });
+      if (!res.ok) throw new Error("Erreur lors de la récupération des ventes");
       const data = await res.json();
       setVentes(data);
     } catch (error) {
-      console.error("Erreur lors de la récupération des ventes :", error);
+      toast.error(error.message);
     }
   };
 
-  fetchVentes();
+  useEffect(() => {
+    const initEcho = async () => {
+      console.log('Initializing Echo...');
+      try {
+        const echoInstance = await echoPromise;
+        console.log('Echo instance received:', echoInstance);
+        setEcho(echoInstance);
+      } catch (error) {
+        console.error("Failed to initialize Echo:", error);
+      }
+    };
+    initEcho();
+  }, []);
 
-}, [token]);
+  useEffect(() => {
+    fetchVentes();
+  }, [token]);
 
+  useEffect(() => {
+    if (echo) {
+      console.log("Echo: Instance ready, checking channel subscription");
+      try {
+        console.log("Echo: Joining private channel 'ventes' and listening for 'VenteCreated'");
+        echo.private("ventes").listen("VenteCreated", (e) => {
+          console.log("⚡ VenteCreated reçu:", e);
+          const newVente = {
+            id: e.id,
+            total: e.total,
+            status: e.status,
+            user_id: token ? JSON.parse(atob(token.split('.')[1])).sub : null, // Extract user_id from token if needed
+            produits: e.produits
+          };
+          setVentes((prev) => [...prev, newVente]);
+          toast.success(`Nouvelle vente #${e.id}`);
+        });
+      } catch (error) {
+        console.error("Echo: Failed to subscribe to channel 'ventes'", error);
+      }
 
+      return () => {
+        console.log("Echo: Leaving channel 'ventes'");
+        if (echo.leaveChannel) {
+          echo.leaveChannel("ventes");
+        }
+      };
+    }
+  }, [echo]);
 
   const format = (amount) => {
     return new Intl.NumberFormat("fr-FR", {
@@ -56,6 +88,10 @@ export default function Paiement() {
     try {
       const methode = methodes[vente.id] || "espèce";
       const montant = parseFloat(montantRecu[vente.id] || vente.total);
+      if (montant < vente.total) {
+        toast.error("Montant insuffisant");
+        return;
+      }
       const monnaie = montant - vente.total;
       const res = await fetch("http://localhost:8000/api/paiement", {
         method: "POST",
@@ -73,8 +109,6 @@ export default function Paiement() {
 
       if (!res.ok) throw new Error("Erreur lors du paiement");
 
-      const data = await res.json();
-      console.log("Paiement effectué :", data);
       toast.success("Paiement effectué");
       setVentes(prev => prev.filter(v => v.id !== vente.id));
       setFacture({ ...vente, date: new Date(),montantRecu: montant,
@@ -82,7 +116,7 @@ export default function Paiement() {
       caissierId: vente.user_id });
 
     } catch (error) {
-      console.error(error);
+      toast.error(error.message);
     }
   };
 

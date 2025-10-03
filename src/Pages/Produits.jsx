@@ -43,7 +43,9 @@ export default function Produits() {
         },
       });
       const data = await res.json();
-      setProduits(data);
+      setProduits(
+        data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+      );
       setLoading(false)
     } catch (error) {
       console.error("Erreur lors de la récupération des produits :", error);
@@ -70,11 +72,12 @@ export default function Produits() {
     }
   }, [token, fetchProduits]); 
     
-   useEffect(() => {
+ useEffect(() => {
   if (token) {
     fetchCategories();
   }
   }, [token, fetchCategories]);
+
 
    const submit = async (e) => {
   e.preventDefault();
@@ -103,6 +106,13 @@ export default function Produits() {
     setErrors(errorData.errors || {});
     throw new Error(errorData.message || "Échec de connexion");
     }
+   const newProduit = await res.json();
+
+    setProduits(prev =>
+      [...prev, newProduit].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      )
+    );
     toast.success("Nouveau produit enregistré avec succes");
     setFormData({ image: "", nom: "", description: "", prix_unitaire: "", categorie_id: "",});
     setShowForm(false);

@@ -22,14 +22,8 @@ export default function App() {
       <Routes>
         <Route path="/authentification" element={<Login />} />
         <Route path="/reset" element={<Reset />} />
-{/*
-        <Route element={<PrivateRoute roles={['admin', 'pharmacien']} />}>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Route>
-*/}
-        <Route element={<PrivateRoute roles={['admin']} />}>
+
+        <Route element={<PrivateRoute  />}>
           <Route path="/" element={<Layout />}>
             <Route index element={<Home />} />
             <Route path="dashboard" element={<Dashboard />} />
@@ -40,21 +34,9 @@ export default function App() {
             <Route path="fournisseur" element={<Fournisseur />} />
             <Route path="commande" element={<Commande />} />
             <Route path="qr" element={<QRCodeScanner />} />
-            {/*
-          </Route>
-        </Route>
-
-        <Route element={<PrivateRoute roles={['caissier']} />}>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Home />} />*/}
+      
             <Route path="paiement" element={<Paiement />} />
-            {/*
-          </Route>
-        </Route>
-
-        <Route element={<PrivateRoute roles={['pharmacien']} />}>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Home />} />*/}
+         
             <Route path="pharmacie" element={<Pharmacie />} />
           </Route>
         </Route>
